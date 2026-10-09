@@ -208,8 +208,7 @@ function vote(optId, choice) {
     if (cur && cur.choice === choice) await fs.deleteDoc(ref);
     else {
       await fs.setDoc(ref, { option: optId, name: me, slug: mySlug, choice, note: cur?.note || "", at: Date.now() });
-      const left = allOptions().filter((o) => o.status !== "afgevallen" && !myVote(o.id)).length;
-      toast(left ? `Opgeslagen · nog ${left} ${left === 1 ? "reis" : "reizen"} te gaan` : "Alle reizen gestemd! Nu nog de vragen.");
+      toast("Stem opgeslagen");
     }
   });
 }
