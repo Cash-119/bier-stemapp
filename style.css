@@ -239,3 +239,20 @@ a.btn{text-decoration:none;display:inline-block}
   .sec-head .eyebrow{width:100%}
   .progress .btn{margin-left:0;flex:1 1 100%}
 }
+
+/* foto's en checks */
+.photos{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:-4px 0 0;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.photos a{flex:0 0 78%;max-width:340px;scroll-snap-align:start;border-radius:10px;overflow:hidden;background:var(--line);aspect-ratio:4/3}
+.photos a:first-child{flex-basis:84%}
+.photos img{width:100%;height:100%;object-fit:cover;display:block;max-width:100%}
+.photo-credit{font-size:12px;color:var(--muted);margin-top:-8px}
+.checks{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg)}
+.checks-head{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.checks ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:14px}
+.checks li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start}
+.ck-ico{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:12px;font-weight:700;margin-top:1px}
+.ck-ok .ck-ico{background:var(--ok-soft);color:var(--ok)}
+.ck-let .ck-ico{background:var(--maybe-soft);color:var(--maybe)}
+.ck-nee .ck-ico{background:var(--no-soft);color:var(--no)}
+.ck-info .ck-ico{background:var(--sea-soft);color:var(--sea)}
+@media (min-width:721px){.photos a{flex-basis:46%}.photos a:first-child{flex-basis:52%}}

@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./config.js";
-import { MEMBERS, BASE_OPTIONS, QUESTIONS } from "./data.js";
+import { MEMBERS, BASE_OPTIONS, QUESTIONS, CHECKED_ON } from "./data.js";
 
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 const CHOICES = [["ja", "Ja"], ["misschien", "Misschien"], ["nee", "Nee"]];
@@ -273,6 +273,13 @@ function passHTML(o) {
   const li = (a) => (a || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li class='muted'>Nog niets genoemd</li>";
   const link = o.link && /^https:\/\//.test(o.link) ? `<dt>Link</dt><dd><a href="${esc(o.link)}" target="_blank" rel="noopener">${esc(o.linkLabel || "Bekijken")}</a></dd>` : "";
   const canDelete = !o.seed && o.bySlug && mySlug && o.bySlug === mySlug;
+  const airbnb = o.airbnb && /^https:\/\/www\.airbnb\./.test(o.airbnb) ? o.airbnb : "";
+  const photos = (o.photos || []).length ? `<div class="photos" role="list" aria-label="Foto's van ${esc(o.houseName || o.title)}">${o.photos.slice(0, 6).map((u, i) =>
+      `<a role="listitem" href="${esc(airbnb || u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Foto ${i + 1} van ${esc(o.houseName || o.title)}" loading="${i ? "lazy" : "eager"}" referrerpolicy="no-referrer"></a>`).join("")}</div>
+      <p class="photo-credit">Foto's van Airbnb${o.photos.length > 1 ? " · swipe voor meer" : ""}</p>` : "";
+  const ICON = { ok: "✓", let: "!", nee: "✕", info: "i" };
+  const checks = (o.checks || []).length ? `<div class="checks"><div class="checks-head">Nagekeken op ${esc(CHECKED_ON)}</div><ul>${o.checks.map((c) =>
+      `<li class="ck-${esc(c.s)}"><span class="ck-ico" aria-hidden="true">${ICON[c.s] || "i"}</span><span>${esc(c.t)}</span></li>`).join("")}</ul></div>` : "";
   return `<article class="pass ${out ? "out" : ""}" id="opt-${esc(o.id)}" data-id="${esc(o.id)}">
     <div class="pass-main">
       <div class="pass-top">
@@ -280,7 +287,9 @@ function passHTML(o) {
         <span class="eyebrow">Voorstel van ${esc(o.by || "?")}</span>
       </div>
       ${out && o.statusNote ? `<p style="color:var(--no);font-weight:600">${esc(o.statusNote)}</p>` : ""}
-      <dl class="facts">${o.flight ? `<dt>Vlucht</dt><dd>${esc(o.flight)}</dd>` : ""}${o.house ? `<dt>Huis</dt><dd>${esc(o.house)}</dd>` : ""}${link}</dl>
+      ${photos}
+      <dl class="facts">${o.flight ? `<dt>Vlucht</dt><dd>${esc(o.flight)}</dd>` : ""}${o.house ? `<dt>Huis</dt><dd>${esc(o.house)}${airbnb ? ` · <a href="${esc(airbnb)}" target="_blank" rel="noopener">Bekijk op Airbnb</a>` : ""}</dd>` : ""}${link}</dl>
+      ${checks}
       <div class="pc"><div class="pro"><h4>Voordelen</h4><ul>${li(o.pros)}</ul></div><div class="con"><h4>Nadelen</h4><ul>${li(o.cons)}</ul></div></div>
       <div class="vote">
         <div class="vote-btns">${CHOICES.map(([k, l]) => `<button type="button" class="vb ${k}" data-choice="${k}" aria-pressed="false">${l}</button>`).join("")}</div>
