@@ -13,27 +13,28 @@ export const BLOCKED_UIDS = ["pFQSbtE8zSbFkgANLTO5j2Jv6fZ2"];
 export const PERIODS = [
   {
     id: "p1", label: "21 – 26 juli", short: "21–26 jul", nights: 5, origin: "AMS", flightPP: 403,
-    flight: "Transavia vanaf Schiphol · 's avonds heen (landen rond 22:00), eind van de ochtend terug",
+    flight: "Transavia vanaf Schiphol · vliegt elke dag · volgens Hidde 's avonds heen (landen rond 22:00) en eind van de ochtend terug",
     flightCheck: "Transavia vliegt elke dag vanaf Schiphol. Nu: heen €242, terug €161.",
     note: "Past voor iedereen, maar is kort. De eerste avond gaat op aan reizen.",
   },
   {
     id: "p2", label: "26 juli – 2 aug", short: "26 jul–2 aug", nights: 7, origin: "RTM", flightPP: 428,
-    flight: "Transavia vanaf Rotterdam/Den Haag · vliegt alleen op maandag en vrijdag · geen ochtendvlucht",
+    flight: "Transavia vanaf Rotterdam/Den Haag · alleen op maandag en vrijdag · 's middags heen, terugvlucht maandagavond 20:10 uit Kos (huidige dienstregeling)",
     flightCheck: "26 juli en 2 aug zijn maandagen, dus Rotterdam vliegt dan. Nu: heen €228, terug €200.",
     note: "Past het best voor Lucas. Hidde vindt een week eigenlijk te lang.",
   },
   {
     id: "p3", label: "21 – 29 juli", short: "21–29 jul", nights: 8, origin: "AMS", flightPP: 390,
-    flight: "Transavia vanaf Schiphol · de terugvlucht op 29 juli is juist goedkoper",
+    flight: "Transavia vanaf Schiphol · vliegt elke dag · de terugvlucht op 29 juli is juist goedkoper",
     flightCheck: "Vlucht is goedkoper dan bij 21–26 juli. Nu: heen €242, terug €148.",
     note: "Lekker lang. Cas wil graag langer, Hidde vindt 8 dagen te lang.",
   },
 ];
 
 export const GENERAL = [
+  { s: "let", t: "Vliegprijzen zijn de laagste prijs voor 1 persoon. Voor 6 stoelen op dezelfde vlucht kan het iets duurder uitvallen, en prijzen veranderen elke dag." },
   { s: "let", t: "Vluchtprijzen zijn met een Basic-ticket (alleen een klein tasje). Een cabinekoffer kost ±€90 extra p.p. heen en terug (schatting uit de chat)." },
-  { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€55 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." },
+  { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€50–60 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." },
 ];
 
 // prices = totaalprijs huis voor de hele groep per periode; null = niet vrij op die data.
@@ -53,7 +54,7 @@ export const HOUSES = [
     id: "huis-sofie", order: 2, by: "Hidde",
     title: "Goedkoopste huis, in het centrum", houseName: "Sofie's Central House",
     airbnb: "https://www.airbnb.nl/rooms/24965735", photos: PHOTOS_SOFIE,
-    house: "Appartement in het centrum · ★4,79 (90 reviews) · 3 slaapkamers · 7 bedden · 2 badkamers",
+    house: "Appartement in Kos-stad (volgens de advertentie in het centrum) · ★4,79 (90 reviews) · 3 slaapkamers · 7 bedden · 2 badkamers",
     pool: false, poolNote: "wel airco en een strand in de buurt",
     prices: { p1: 1494, p2: 1839, p3: 2093 },
     checks: [{ s: "ok", t: "Slaapplekken: 3 kamers met elk 2 eenpersoonsbedden, plus een slaapbank. Iedereen een eigen bed." }],

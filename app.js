@@ -18,10 +18,23 @@ let fs = null; // Firestore-functies + db, gevuld zodra Firebase klaar is
 let period = "p1";
 try { const p = localStorage.getItem("kos-periode"); if (PERIODS.some((x) => x.id === p)) period = p; } catch (e) {}
 const curPeriod = () => PERIODS.find((p) => p.id === period) || PERIODS[0];
-function setPeriod(id) {
+function setPeriod(id, anchorEl) {
   if (id === period || !PERIODS.some((p) => p.id === id)) return;
   period = id; try { localStorage.setItem("kos-periode", id); } catch (e) {}
+  // De kaart waarop je klikte blijft op dezelfde plek op je scherm staan.
+  const cardId = anchorEl?.closest(".pass")?.dataset.id;
+  const before = anchorEl ? anchorEl.getBoundingClientRect().top : null;
+  const strips = {};
+  document.querySelectorAll("#opties .pass").forEach((c) => { const st = c.querySelector(".photos"); if (st) strips[c.dataset.id] = st.scrollLeft; });
   renderAll();
+  document.querySelectorAll("#opties .pass").forEach((c) => { const st = c.querySelector(".photos"); if (st && strips[c.dataset.id]) st.scrollLeft = strips[c.dataset.id]; });
+  if (cardId && before !== null) {
+    const chip = document.querySelector(`#opties .pass[data-id="${CSS.escape(cardId)}"] [data-period="${id}"]`);
+    if (chip) {
+      window.scrollBy({ top: chip.getBoundingClientRect().top - before, behavior: "instant" });
+      chip.focus({ preventScroll: true });
+    }
+  }
 }
 function viewOf(h) {
   const P = curPeriod();
@@ -391,7 +404,7 @@ function renderPasses() {
 }
 $("#opties").addEventListener("click", (e) => {
   const card = e.target.closest(".pass"); if (!card) return; const id = card.dataset.id;
-  const pb = e.target.closest("[data-period]"); if (pb) { setPeriod(pb.dataset.period); return; }
+  const pb = e.target.closest("[data-period]"); if (pb) { e.preventDefault(); setPeriod(pb.dataset.period, pb); return; }
   const gb = e.target.closest("[data-gallery]"); if (gb) { openGallery(id, Number(gb.dataset.gallery) || 0); return; }
   const vb = e.target.closest(".vb"); if (vb) { vote(id, vb.dataset.choice); return; }
   if (e.target.closest("[data-save]")) { const inp = card.querySelector("[data-note]"); delete inp.dataset.dirty; saveNote(id, inp.value); return; }
