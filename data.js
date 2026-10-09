@@ -1,7 +1,7 @@
 // Huizen, periodes en vragen voor de Bier-StemApp.
 // Prijzen, beschikbaarheid en vluchten gecheckt op 9 oktober 2026 (Airbnb + Transavia, 6 personen).
 // Reizen die vrienden zelf toevoegen staan in Firebase (collectie "options").
-import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA } from "./photos.js";
+import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA, PHOTOS_ANGELA } from "./photos.js";
 
 export const MEMBERS = ["Cas", "Hidde", "Lucas", "Shane", "Maurits", "Timo"];
 export const CHECKED_ON = "9 okt";
@@ -33,7 +33,7 @@ export const PERIODS = [
 
 export const GENERAL = [
   { s: "info", t: "Alle prijzen zijn nagekeken voor 6 personen, maar ze veranderen elke dag. Check ze vlak voor het boeken nog een keer." },
-  { s: "let", t: "Vluchtprijzen zijn met een Basic-ticket (alleen een klein tasje). Een cabinekoffer kost ±€90 extra p.p. heen en terug (schatting uit de chat)." },
+  { s: "let", t: "Bij de Airbnb-huizen is de vlucht los geboekt bij Transavia met een Basic-ticket (alleen een klein tasje). Een cabinekoffer kost ±€90 extra p.p. heen en terug (schatting uit de chat)." },
   { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€50–60 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." },
 ];
 
@@ -87,6 +87,25 @@ export const HOUSES = [
     checks: [{ s: "let", t: "5 bedden voor 6 man: 2 mensen moeten samen in één bed." }],
     pros: ["Hoogst beoordeeld (★5,0)", "Het eerste huis dat Hidde voorstelde"],
     cons: ["Alleen vrij op 21–26 juli", "2 mensen moeten een bed delen", "Geen zwembad"],
+  },
+  {
+    id: "huis-angela", order: 5, by: "Cas", package: true,
+    title: "Pakketreis met zwembad", houseName: "Appartementen Angela (Sunweb)",
+    sunweb: "https://www.sunweb.nl/vakantie/griekenland/kos/kos-stad/appartementen-angela", photos: PHOTOS_ANGELA,
+    house: "Appartementencomplex in Kos-stad · reviews 8/10 (86) · 3-kamerappartement ±60 m² met 6 slaapplekken · 1 badkamer · centrum 300 m · strand 400 m",
+    pool: true, poolNote: "zwembad met poolbar, ligstoelen en parasols (gedeeld met het complex)",
+    // Sunweb-prijs p.p. inclusief vlucht vanaf Schiphol, alleen logies, 6 personen in 1 appartement.
+    packagePP: { p1: 658, p2: 744, p3: 770 },
+    checks: [
+      { s: "ok", t: "Vlucht + appartement in één boeking via Sunweb, vanaf Schiphol. Op 21 juli zijn er nog 4 appartementen voor 6 personen vrij." },
+      { s: "info", t: "Slapen: 2 slaapkamers (een tweepersoonsbed óf 2 losse bedden) en 2 bedbanken in de woonkamer." },
+      { s: "let", t: "Maar 1 badkamer voor 6 man, en airco kost extra (te betalen per dag)." },
+      { s: "let", t: "Transfer van het vliegveld zit er niet bij. De Sunweb-bus kost extra en doet 1–2 uur over Kos-stad; een taxi doet ±30 min." },
+      { s: "info", t: "Bagage, vliegmaatschappij en vliegtijden zie je pas in de boekingsstappen; die heb ik niet gecheckt." },
+      { s: "let", t: "Volgens reviews zijn de appartementen gehorig." },
+    ],
+    pros: ["Zwembad met poolbar", "300 m van het centrum, 400 m van het strand", "In juli en augustus populair bij jongeren (volgens Sunweb)", "Goedkoopste optie met een zwembad"],
+    cons: ["Eenvoudig (officieel 2 sterren)", "1 badkamer en 2 man op een bedbank", "Transfer en airco kosten extra"],
   },
 ];
 
