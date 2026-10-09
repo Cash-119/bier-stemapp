@@ -21,10 +21,8 @@ function toast(msg) {
   clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600);
 }
 
-/* ---------- naam: vast per apparaat, met pincode ----------
-   claims/<slug>  {name, uid}  openbaar: wie welke naam heeft
-   secrets/<slug> {pin}        onleesbaar, alleen de regels kijken erin
-   logins/<uid>   {slug, pin}  inlogpoging op een nieuw apparaat
+/* ---------- naam: vast per apparaat ----------
+   claims/<slug>  {name, uid}  wie welke naam heeft; elke naam kan maar één keer gekozen worden
 */
 const TEST = /^test-/; // proefnamen: onzichtbaar, alleen bruikbaar met kos-test=1
 const testMode = () => { try { return localStorage.getItem("kos-test") === "1"; } catch (e) { return false; } };
@@ -62,7 +60,7 @@ function renderProgress() {
   if (!S.claimsLoaded) { p.hidden = true; return; }
   p.hidden = false;
   if (!me) {
-    p.innerHTML = `<span class="prog-text">Kies eerst je naam, dan kun je stemmen.</span><button class="btn small" type="button" data-pickname>Naam kiezen</button>`;
+    p.innerHTML = `<span class="prog-text">Zin om mee te stemmen?</span><button class="btn small" type="button" data-pickname>Kies je naam</button>`;
     return;
   }
   const trips = openTrips();
@@ -70,10 +68,10 @@ function renderProgress() {
   const a = QUESTIONS.filter((q) => myAnswer(q.id)).length;
   const total = trips.length + QUESTIONS.length, done = v + a;
   p.innerHTML = done >= total
-    ? `<span class="prog-text ok">Klaar! Je hebt alles ingevuld.</span><button class="btn small ghost" type="button" data-next>Bekijk de uitslag</button>`
+    ? `<span class="prog-text ok">Alles ingevuld, top!</span><button class="btn small ghost" type="button" data-next>Bekijk de uitslag</button>`
     : `<div class="prog-bar" aria-hidden="true"><span style="width:${(done / total) * 100}%"></span></div>
        <span class="prog-text">${v}/${trips.length} reizen · ${a}/${QUESTIONS.length} vragen</span>
-       <button class="btn small" type="button" data-next>${done ? "Verder" : "Begin met stemmen"}</button>`;
+       <button class="btn small ghost" type="button" data-next>Volgende</button>`;
 }
 const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
 $("#progress").addEventListener("click", (e) => {
@@ -112,84 +110,69 @@ function renderGate() {
   const card = $("#gate-card");
   const { mode, name, err } = gateState;
   if (!fs || !S.claimsLoaded) {
-    card.innerHTML = `<h2 id="gate-title">Wie ben jij?</h2><p class="muted">${S.authError ? "Inloggen bij de stemdatabase lukte niet. Ververs de pagina en probeer het opnieuw." : "Even laden…"}</p>
-      <div class="gate-actions"><button class="btn ghost small" type="button" data-close>Eerst rondkijken</button></div>`;
+    card.innerHTML = `<h2 id="gate-title">Wie ben jij?</h2><p class="muted">${S.authError ? "Verbinden lukte niet. Ververs de pagina en probeer het opnieuw." : "Even laden…"}</p>
+      <div class="gate-actions"><button class="btn ghost small" type="button" data-close>Sluiten</button></div>`;
     return;
   }
   if (mode === "pick") {
     const taken = new Set(S.claims.map((c) => c.id));
     const names = [...new Map([...MEMBERS, ...S.claims.filter((c) => visible(c.id)).map((c) => c.name)].map((n) => [slug(n), n])).values()];
     card.innerHTML = `<h2 id="gate-title">Wie ben jij?</h2>
-      <p class="muted">Kies je naam en bedenk een pincode van 4 cijfers. Je naam blijft daarna vastgezet op dit apparaat, zodat niemand anders onder jouw naam kan stemmen.</p>
+      <p class="muted">Kies je naam om mee te stemmen. Je naam blijft daarna op dit apparaat staan.</p>
       <div class="name-chips">${names.map((n) => `<button type="button" data-name="${esc(n)}" class="${taken.has(slug(n)) ? "taken" : ""}">${esc(n)}</button>`).join("")}</div>
       <form data-other class="gate-actions"><input type="text" id="gate-input" maxlength="24" placeholder="Andere naam" aria-label="Andere naam" style="flex:1;min-width:0"><button class="btn" type="submit">Verder</button></form>
-      <div class="gate-actions"><button class="linkbtn" type="button" data-close>Eerst rondkijken</button></div>`;
+      <p class="gate-err" role="alert">${esc(err)}</p>
+      <div class="gate-actions"><button class="linkbtn" type="button" data-close>Nee, ik kijk alleen even</button></div>`;
     return;
   }
-  const isNew = mode === "new";
-  card.innerHTML = `<h2 id="gate-title">${isNew ? `Hoi ${esc(name)}!` : `Ben jij ${esc(name)}?`}</h2>
-    <p class="muted">${isNew
-      ? "Kies een pincode van 4 cijfers en onthoud hem goed. Met deze code kun je later ook op een ander apparaat (of in een andere browser) als jezelf stemmen."
-      : "Deze naam is al vastgezet. Vul je pincode in om ook op dit apparaat als " + esc(name) + " te stemmen."}</p>
-    <form data-pin class="gate-actions">
-      <input class="pin" type="text" id="gate-pin" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" placeholder="••••" aria-label="Pincode van 4 cijfers">
-      <button class="btn" type="submit" ${busy.has("gate") ? "disabled" : ""}>${isNew ? "Naam vastzetten" : "Inloggen"}</button>
-    </form>
-    <p class="gate-err" role="alert">${esc(err)}</p>
-    <div class="gate-actions"><button class="linkbtn" type="button" data-back>Andere naam kiezen</button></div>`;
+  if (mode === "taken") {
+    card.innerHTML = `<h2 id="gate-title">${esc(name)} is al bezet</h2>
+      <p class="muted">Iemand heeft deze naam al gekozen op een ander apparaat. Ben jij dat? Open de site dan op het apparaat waar je eerder stemde, of vraag Cas om je naam vrij te geven.</p>
+      <div class="gate-actions"><button class="btn" type="button" data-back>Andere naam kiezen</button><button class="linkbtn" type="button" data-close>Sluiten</button></div>`;
+    return;
+  }
+  card.innerHTML = `<h2 id="gate-title">Ben jij ${esc(name)}?</h2>
+    <p class="muted">Je naam komt bij je stemmen te staan en blijft op dit apparaat staan. Wisselen kan daarna niet meer.</p>
+    <div class="gate-actions"><button class="btn" type="button" data-confirm ${busy.has("gate") ? "disabled" : ""}>Ja, ik ben ${esc(name)}</button><button class="linkbtn" type="button" data-back>Nee, terug</button></div>
+    <p class="gate-err" role="alert">${esc(err)}</p>`;
 }
 
 function chooseName(raw) {
   const n = String(raw || "").trim().replace(/\s+/g, " ").slice(0, 24);
-  if (!n) return;
-  if (slug(n) === "anoniem") { openGate("pick", "", ""); return; }
+  if (!n || slug(n) === "anoniem") return;
   const claim = S.claims.find((c) => c.id === slug(n));
-  if (claim) openGate("login", claim.name);
-  else openGate("new", n);
+  if (claim) openGate("taken", claim.name);
+  else openGate("confirm", n);
 }
 
-async function submitPin(pin) {
-  const { mode, name } = gateState;
-  if (!/^[0-9]{4}$/.test(pin)) { gateState.err = "Vul precies 4 cijfers in."; renderGate(); return; }
+async function claimName() {
+  const { name } = gateState;
   if (busy.has("gate")) return;
   busy.add("gate"); gateState.err = ""; renderGate();
   const s = slug(name);
   try {
-    if (mode === "new") {
-      const b = fs.writeBatch(fs.db);
-      b.set(fs.doc(fs.db, "claims", s), { name, uid: S.uid, at: Date.now() });
-      b.set(fs.doc(fs.db, "secrets", s), { pin });
-      await b.commit();
-      toast(`Welkom ${name}! Je naam staat vast.`);
-    } else {
-      await fs.setDoc(fs.doc(fs.db, "logins", S.uid), { slug: s, pin });
-      await fs.setDoc(fs.doc(fs.db, "claims", s), { name, uid: S.uid, at: Date.now() });
-      toast(`Ingelogd als ${name}`);
-    }
+    await fs.setDoc(fs.doc(fs.db, "claims", s), { name, uid: S.uid, at: Date.now() });
     try { localStorage.setItem("kos-naam", name); } catch (e) {}
     S.claims = [...S.claims.filter((c) => c.id !== s), { id: s, name, uid: S.uid }];
     deriveMe(); closeGate(); renderAll();
+    toast(`Hoi ${name}! Stem gerust waar je zin in hebt.`);
   } catch (e) {
     console.error(e);
-    gateState.err = mode === "new"
-      ? "Die naam werd net door iemand anders gekozen. Kies een andere naam."
-      : "Die pincode klopt niet. Probeer het opnieuw.";
-    if (mode === "new") gateState.mode = "pick";
+    gateState = { mode: "taken", name, err: "" };
     renderGate();
   } finally { busy.delete("gate"); }
 }
 
 $("#gate-card").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-name]"); if (b) { chooseName(b.dataset.name); return; }
+  if (e.target.closest("[data-confirm]")) { claimName(); return; }
   if (e.target.closest("[data-close]")) { closeGate(); return; }
   if (e.target.closest("[data-back]")) { openGate("pick"); return; }
 });
 $("#gate-card").addEventListener("submit", (e) => {
   e.preventDefault();
   if (e.target.matches("[data-other]")) chooseName($("#gate-input").value);
-  if (e.target.matches("[data-pin]")) submitPin($("#gate-pin").value.trim());
 });
-$("#gate-card").addEventListener("input", (e) => { if (e.target.id === "gate-pin") e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
 $("#gate").addEventListener("click", (e) => { if (e.target.id === "gate") closeGate(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeGate(); });
 
@@ -281,14 +264,6 @@ function renderStand() {
       <div class="counts">${r.c.ja} ja · ${r.c.misschien} misschien · ${r.c.nee} nee</div>
     </li>`;
   }).join("")}</ol>`;
-  if (!S.loaded) { $("#pending").innerHTML = ""; return; }
-  const openIds = allOptions().filter((o) => o.status !== "afgevallen").map((o) => o.id);
-  const voted = new Set(S.votes.filter((v) => openIds.includes(v.option)).map((v) => slug(v.name)));
-  const people = [...new Map([...MEMBERS, ...S.claims.filter((c) => visible(c.id)).map((c) => c.name)].map((n) => [slug(n), n])).values()];
-  const missing = people.filter((n) => !voted.has(slug(n)));
-  $("#pending").innerHTML = missing.length
-    ? `<span class="muted">Nog niet gestemd:</span> ${missing.map((n) => `<span class="chip">${esc(n)}</span>`).join("")}`
-    : `<span class="chip ja">Iedereen heeft gestemd</span>`;
 }
 
 /* ---------- opties ---------- */
@@ -464,11 +439,9 @@ renderAll();
       }, fail);
     };
     sub("claims", "claims", () => {
-      const firstLoad = !S.claimsLoaded;
-      S.claimsLoaded = true;
+            S.claimsLoaded = true;
       deriveMe();
-      if (firstLoad && !me) openGate();
-      else if (!$("#gate").hidden && gateState.mode === "pick") renderGate();
+      if (!$("#gate").hidden && gateState.mode === "pick") renderGate();
     });
     sub("votes", "votes"); sub("answers", "answers"); sub("options", "extra");
   } catch (err) { console.error(err); S.error = err; renderNotice(); }

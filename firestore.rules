@@ -9,39 +9,15 @@ service cloud.firestore {
     function nameOf(s) { return get(claimPath(s)).data.name; }
     function strMax(v, n) { return v is string && v.size() <= n; }
 
-    // Wie welke naam heeft. Een naam claimen kan maar één keer;
-    // overnemen op een ander apparaat kan alleen met de juiste pincode.
+    // Wie welke naam heeft. Elke naam kan maar één keer gekozen worden
+    // en blijft daarna bij dat apparaat. Vrijgeven kan alleen via de Firebase-console.
     match /claims/{slug} {
       allow read: if true;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['name', 'uid', 'at'])
         && request.resource.data.uid == request.auth.uid
-        && strMax(request.resource.data.name, 24)
-        && getAfter(/databases/$(db)/documents/secrets/$(slug)).data.pin is string;
-      allow update: if request.auth != null
-        && request.resource.data.keys().hasOnly(['name', 'uid', 'at'])
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.name == resource.data.name
-        && get(/databases/$(db)/documents/logins/$(request.auth.uid)).data.slug == slug
-        && get(/databases/$(db)/documents/logins/$(request.auth.uid)).data.pin
-           == get(/databases/$(db)/documents/secrets/$(slug)).data.pin;
-      allow delete: if false;
-    }
-
-    // Pincodes: door niemand te lezen, alleen door deze regels.
-    match /secrets/{slug} {
-      allow read, update, delete: if false;
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['pin'])
-        && request.resource.data.pin is string
-        && request.resource.data.pin.matches('[0-9]{4}')
-        && getAfter(claimPath(slug)).data.uid == request.auth.uid;
-    }
-
-    // Inlogpoging op een nieuw apparaat.
-    match /logins/{uid} {
-      allow read: if false;
-      allow write: if request.auth != null && request.auth.uid == uid;
+        && strMax(request.resource.data.name, 24);
+      allow update, delete: if false;
     }
 
     match /votes/{id} {
