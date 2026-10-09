@@ -287,7 +287,7 @@ function passHTML(o) {
       </div>
       ${out && o.statusNote ? `<p style="color:var(--no);font-weight:600">${esc(o.statusNote)}</p>` : ""}
       ${photos}
-      <dl class="facts">${o.flight ? `<dt>Vlucht</dt><dd>${esc(o.flight)}</dd>` : ""}${o.house ? `<dt>Huis</dt><dd>${esc(o.house)}${airbnb ? ` · <a href="${esc(airbnb)}" target="_blank" rel="noopener">Bekijk op Airbnb</a>` : ""}</dd>` : ""}${link}</dl>
+      <dl class="facts">${o.flight ? `<dt>Vlucht</dt><dd>${esc(o.flight)}</dd>` : ""}${o.house ? `<dt>Huis</dt><dd>${esc(o.house)}${airbnb ? ` · <a href="${esc(airbnb)}" target="_blank" rel="noopener">Bekijk op Airbnb</a>` : ""}</dd>` : ""}${o.pool === true || o.pool === false ? `<dt>Zwembad</dt><dd>${o.pool ? "<b>Ja</b>" : "Nee"}${o.poolNote ? ` · ${esc(o.poolNote)}` : ""}</dd>` : ""}${link}</dl>
       ${checks}
       <div class="pc"><div class="pro"><h4>Voordelen</h4><ul>${li(o.pros)}</ul></div><div class="con"><h4>Nadelen</h4><ul>${li(o.cons)}</ul></div></div>
       <div class="vote">
@@ -326,7 +326,7 @@ function renderPasses() {
     }
     const out = o.status === "afgevallen";
     (out ? boxOut : box).appendChild(el);
-    el.querySelector("[data-tags]").innerHTML = (o.id === topId ? `<span class="tag lead">Ligt voor</span>` : "") + (out ? `<span class="tag out">Valt af</span>` : "") + (o.length ? `<span class="tag">${esc(o.length)}</span>` : "");
+    el.querySelector("[data-tags]").innerHTML = (o.id === topId ? `<span class="tag lead">Ligt voor</span>` : "") + (out ? `<span class="tag out">Valt af</span>` : "") + (o.length ? `<span class="tag">${esc(o.length)}</span>` : "") + (o.pool === true ? `<span class="tag pool">Zwembad</span>` : o.pool === false ? `<span class="tag">Geen zwembad</span>` : "");
     const mine = myVote(o.id); const isBusy = busy.has("v:" + o.id);
     el.querySelectorAll(".vb").forEach((b) => { b.setAttribute("aria-pressed", String(mine?.choice === b.dataset.choice)); b.disabled = isBusy; });
     const t = tally(o.id);
@@ -399,6 +399,7 @@ $("#add-form").addEventListener("submit", (e) => {
   const data = {
     title: v("#f-title").slice(0, 60), dates: v("#f-dates").slice(0, 40), length: v("#f-length").slice(0, 30),
     pricePP: Number(v("#f-price")) || 0, flight: fl.slice(0, 160), house: v("#f-house").slice(0, 160),
+    pool: $("#f-pool").value === "ja" ? true : $("#f-pool").value === "nee" ? false : null,
     link: link.slice(0, 400), linkLabel: "Bekijken", pros: lines($("#f-pros").value), cons: lines($("#f-cons").value),
     origin: /rotterdam|rtm/i.test(fl) ? "RTM" : /eindhoven|ein\b/i.test(fl) ? "EIN" : /weeze|nrn/i.test(fl) ? "NRN" : "AMS",
     status: "open", by: me, bySlug: mySlug, order: Date.now(), seed: false,

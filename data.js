@@ -11,6 +11,7 @@ const img = (path) => `https://a0.muscache.com/im/pictures/${path}?im_w=720`;
 const HUIS_LUCAS = {
   airbnb: "https://www.airbnb.nl/rooms/1586290862285761861",
   houseName: "Enorm 4BR Retro Appartement",
+  pool: false, poolNote: "wel strand op 3 min lopen, airco en een balkon",
   photos: [
     "256140a0-0445-4916-bc55-f8ec58dff09d", "cac14774-6f49-49ff-921f-9015586a63a9",
     "c3ffb949-5d55-48ad-8c14-2a02a21d1676", "e873ee12-d551-4253-b8e3-e57ba2551eab",
@@ -20,6 +21,7 @@ const HUIS_LUCAS = {
 const HUIS_SOFIE = {
   airbnb: "https://www.airbnb.nl/rooms/24965735",
   houseName: "Sofie's Central House",
+  pool: false, poolNote: "wel airco en een strand in de buurt",
   photos: [
     "c610aa11-421b-441e-b4fa-32502d6af0e9", "5b569c5c-bf96-4063-a8cf-6843006fd78f",
     "40782de2-22d5-4a96-9019-0886c9ecf898", "314d0ec7-86e4-4505-a9ee-19d90b559a23",
@@ -29,6 +31,7 @@ const HUIS_SOFIE = {
 const HUIS_BESA = {
   airbnb: "https://www.airbnb.nl/rooms/1690724744995440658",
   houseName: "Besa Luxury Villa 2",
+  pool: false, poolNote: "",
   photos: [
     "4b31d045-bbdb-43d6-a897-b6993cf031c3", "a059c560-448d-437e-aec4-d18ddb512fdd",
     "da970f9a-f9db-4a96-97b5-19fe1e3d39fd", "b170b46b-4ddc-4a0f-acfa-b0a6d383b1c7",
@@ -75,8 +78,7 @@ export const BASE_OPTIONS = [
     link: TRANSAVIA, linkLabel: "Transavia",
     checks: [
       { s: "ok", t: "Huis is vrij op 21–26 juli: €1.494 voor de hele groep." },
-      { s: "ok", t: "7 bedden voor 6 man: genoeg plek." },
-      { s: "info", t: "Hoe de bedden verdeeld zijn, staat niet op Airbnb. Even vragen aan de host." },
+      { s: "ok", t: "Slaapplekken: 3 kamers met elk 2 eenpersoonsbedden, plus een slaapbank. Iedereen een eigen bed." },
       KOFFER, TAXI,
     ],
     pros: [

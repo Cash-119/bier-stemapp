@@ -256,3 +256,5 @@ a.btn{text-decoration:none;display:inline-block}
 .ck-nee .ck-ico{background:var(--no-soft);color:var(--no)}
 .ck-info .ck-ico{background:var(--sea-soft);color:var(--sea)}
 @media (min-width:721px){.photos a{flex-basis:46%}.photos a:first-child{flex-basis:52%}}
+.tag.pool{background:var(--sea-soft);color:var(--sea);font-weight:700}
+select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
