@@ -7,38 +7,33 @@ export const CHECKED_ON = "9 okt";
 // Apparaten die geblokkeerd zijn (alles wat ze schreven wordt verborgen).
 export const BLOCKED_UIDS = ["pFQSbtE8zSbFkgANLTO5j2Jv6fZ2"];
 
+import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA } from "./photos.js";
+
 const TRANSAVIA = "https://www.transavia.com/home/nl-nl";
-const img = (path) => `https://a0.muscache.com/im/pictures/${path}?im_w=720`;
 
 const HUIS_LUCAS = {
   airbnb: "https://www.airbnb.nl/rooms/1586290862285761861",
   houseName: "Enorm 4BR Retro Appartement",
   pool: false, poolNote: "wel strand op 3 min lopen, airco en een balkon",
-  photos: [
-    "256140a0-0445-4916-bc55-f8ec58dff09d", "cac14774-6f49-49ff-921f-9015586a63a9",
-    "c3ffb949-5d55-48ad-8c14-2a02a21d1676", "e873ee12-d551-4253-b8e3-e57ba2551eab",
-    "4f72bb7a-7c4c-4814-b1a4-a04a18504dbe",
-  ].map((id) => img(`hosting/Hosting-1586290862285761861/original/${id}.jpeg`)),
+  photos: PHOTOS_LUCAS,
 };
 const HUIS_SOFIE = {
   airbnb: "https://www.airbnb.nl/rooms/24965735",
   houseName: "Sofie's Central House",
   pool: false, poolNote: "wel airco en een strand in de buurt",
-  photos: [
-    "c610aa11-421b-441e-b4fa-32502d6af0e9", "5b569c5c-bf96-4063-a8cf-6843006fd78f",
-    "40782de2-22d5-4a96-9019-0886c9ecf898", "314d0ec7-86e4-4505-a9ee-19d90b559a23",
-    "40d6a983-5842-403f-87b8-4d54b1ad1292",
-  ].map((id) => img(`${id}.jpg`)),
+  photos: PHOTOS_SOFIE,
 };
 const HUIS_BESA = {
   airbnb: "https://www.airbnb.nl/rooms/1690724744995440658",
   houseName: "Besa Luxury Villa 2",
   pool: false, poolNote: "",
-  photos: [
-    "4b31d045-bbdb-43d6-a897-b6993cf031c3", "a059c560-448d-437e-aec4-d18ddb512fdd",
-    "da970f9a-f9db-4a96-97b5-19fe1e3d39fd", "b170b46b-4ddc-4a0f-acfa-b0a6d383b1c7",
-    "ee031d56-09d0-456d-994b-b90b00f577c0",
-  ].map((id) => img(`hosting/Hosting-1690724744995440658/original/${id}.jpeg`)),
+  photos: PHOTOS_BESA,
+};
+const HUIS_VILLA = {
+  airbnb: "https://www.airbnb.nl/rooms/1427456545646172601",
+  houseName: "Kosnian Villa",
+  pool: true, poolNote: "eigen privézwembad, tuin met barbecue en ligstoelen",
+  photos: PHOTOS_VILLA,
 };
 
 const TAXI = { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€55 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." };
@@ -92,6 +87,33 @@ export const BASE_OPTIONS = [
       "Hidde vond het huis \"heel lelijk\"",
       "Maar 5 nachten",
       "Eerste avond gaat op aan reizen",
+    ],
+  },
+  {
+    id: "villa-zwembad-21-26-juli", order: 2.5, seed: true, status: "open", by: "Cas",
+    title: "Villa met zwembad", dates: "21 – 26 juli", length: "5 nachten",
+    pricePP: 918, priceNote: "Huis €515 + vlucht €403 (Basic)", origin: "AMS",
+    flight: "Transavia vanaf Schiphol · zelfde vluchten als de korte trip",
+    house: "Villa · ★5,0 (15 reviews) · 3 slaapkamers met elk een queensize bed · 2 badkamers · 5 km buiten Kos-stad · Jeep inbegrepen",
+    ...HUIS_VILLA,
+    link: TRANSAVIA, linkLabel: "Transavia",
+    checks: [
+      { s: "ok", t: "Villa is vrij op 21–26 juli: €3.091 voor de hele groep." },
+      { s: "ok", t: "Eigen zwembad, tuin met barbecue, en een Jeep Renegade zit bij de prijs." },
+      { s: "let", t: "Bedden delen: 3 slaapkamers met elk 1 queensize bed. Airbnb zelf noemt zelfs maar \"1 bed\"; even navragen bij de host." },
+      { s: "let", t: "Ligt 5 km buiten de stad. In de Jeep passen 5 mensen, dus met 6 man heb je soms een taxi nodig." },
+      { s: "info", t: "Inchecken vanaf 15:00 met sleutelkastje. Gratis annuleren tot 21 juni 2027." },
+      KOFFER, TAXI,
+    ],
+    pros: [
+      "Het enige huis met een eigen zwembad",
+      "Auto erbij: makkelijk naar stranden en Tigaki",
+      "Alle 15 reviews geven 5 sterren",
+    ],
+    cons: [
+      "Duurste korte trip",
+      "Iedereen moet een bed delen",
+      "Niet in de stad: uitgaan betekent rijden of een taxi",
     ],
   },
   {

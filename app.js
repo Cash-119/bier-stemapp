@@ -272,9 +272,10 @@ function passHTML(o) {
   const link = o.link && /^https:\/\//.test(o.link) ? `<dt>Link</dt><dd><a href="${esc(o.link)}" target="_blank" rel="noopener">${esc(o.linkLabel || "Bekijken")}</a></dd>` : "";
   const canDelete = !o.seed && o.bySlug && mySlug && o.bySlug === mySlug;
   const airbnb = o.airbnb && /^https:\/\/www\.airbnb\./.test(o.airbnb) ? o.airbnb : "";
-  const photos = (o.photos || []).length ? `<div class="photos" role="list" aria-label="Foto's van ${esc(o.houseName || o.title)}">${o.photos.slice(0, 6).map((u, i) =>
-      `<a role="listitem" href="${esc(airbnb || u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Foto ${i + 1} van ${esc(o.houseName || o.title)}" loading="${i ? "lazy" : "eager"}" referrerpolicy="no-referrer"></a>`).join("")}</div>
-      <p class="photo-credit">Foto's van Airbnb${o.photos.length > 1 ? " · swipe voor meer" : ""}</p>` : "";
+  const ph = o.photos || [];
+  const photos = ph.length ? `<div class="photos" role="list" aria-label="Foto's van ${esc(o.houseName || o.title)}">${ph.slice(0, 8).map((u, i) =>
+      `<button type="button" role="listitem" class="ph" data-gallery="${i}"><img src="${esc(u)}" alt="Foto ${i + 1} van ${esc(o.houseName || o.title)}" loading="${i ? "lazy" : "eager"}" referrerpolicy="no-referrer"></button>`).join("")}${ph.length > 8 ? `<button type="button" class="ph more" data-gallery="8"><span>+${ph.length - 8}</span>meer foto's</button>` : ""}</div>
+      <div class="photo-row"><button type="button" class="btn ghost small" data-gallery="0">Bekijk alle ${ph.length} foto's</button><span class="photo-credit">Foto's van Airbnb</span></div>` : "";
   const ICON = { ok: "✓", let: "!", nee: "✕", info: "i" };
   const checks = (o.checks || []).length ? `<div class="checks"><div class="checks-head">Nagekeken op ${esc(CHECKED_ON)}</div><ul>${o.checks.map((c) =>
       `<li class="ck-${esc(c.s)}"><span class="ck-ico" aria-hidden="true">${ICON[c.s] || "i"}</span><span>${esc(c.t)}</span></li>`).join("")}</ul></div>` : "";
@@ -341,12 +342,29 @@ function renderPasses() {
 }
 $("#opties").addEventListener("click", (e) => {
   const card = e.target.closest(".pass"); if (!card) return; const id = card.dataset.id;
+  const gb = e.target.closest("[data-gallery]"); if (gb) { openGallery(id, Number(gb.dataset.gallery) || 0); return; }
   const vb = e.target.closest(".vb"); if (vb) { vote(id, vb.dataset.choice); return; }
   if (e.target.closest("[data-save]")) { const inp = card.querySelector("[data-note]"); delete inp.dataset.dirty; saveNote(id, inp.value); return; }
   if (e.target.closest("[data-del]")) { card.querySelector("[data-confirm]").hidden = false; return; }
   if (e.target.closest("[data-del-no]")) { card.querySelector("[data-confirm]").hidden = true; return; }
   if (e.target.closest("[data-del-yes]")) guarded("d:" + id, async () => { await fs.deleteDoc(fs.doc(fs.db, "options", id)); toast("Optie verwijderd"); });
 });
+/* ---------- fotogalerij ---------- */
+function openGallery(optId, start) {
+  const o = allOptions().find((x) => x.id === optId); if (!o || !(o.photos || []).length) return;
+  const g = $("#gallery");
+  $("#gallery-title").textContent = `${o.houseName || o.title} · ${o.photos.length} foto's`;
+  const link = $("#gallery-link");
+  if (o.airbnb) { link.href = o.airbnb; link.hidden = false; } else link.hidden = true;
+  $("#gallery-grid").innerHTML = o.photos.map((u, i) => `<img src="${esc(u)}" alt="Foto ${i + 1} van ${o.photos.length}" loading="lazy" referrerpolicy="no-referrer" id="g-${i}">`).join("");
+  g.hidden = false; document.body.style.overflow = "hidden";
+  requestAnimationFrame(() => { const el = document.getElementById("g-" + start); if (el && start > 0) el.scrollIntoView({ block: "start" }); else $("#gallery-grid").scrollTop = 0; });
+  $("#gallery-close").focus();
+}
+function closeGallery() { $("#gallery").hidden = true; document.body.style.overflow = ""; $("#gallery-grid").innerHTML = ""; }
+$("#gallery-close").addEventListener("click", closeGallery);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#gallery").hidden) closeGallery(); });
+
 $("#opties").addEventListener("input", (e) => { if (e.target.matches("[data-note]")) e.target.dataset.dirty = "1"; });
 $("#opties").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("[data-note]")) { e.preventDefault(); e.target.closest(".note-row").querySelector("[data-save]").click(); } });
 
