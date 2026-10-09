@@ -1,7 +1,7 @@
 // Huizen, periodes en vragen voor de Bier-StemApp.
-// Prijzen, beschikbaarheid en vluchten gecheckt op 9 oktober 2026 (Airbnb + Transavia, 6 personen).
+// Prijzen, beschikbaarheid en vluchten gecheckt op 9 oktober 2026 (Airbnb + Transavia + Sunweb, 6 personen).
 // Reizen die vrienden zelf toevoegen staan in Firebase (collectie "options").
-import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA, PHOTOS_ANGELA } from "./photos.js";
+import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA, PHOTOS_ANGELA, PHOTOS_ANASTASIA } from "./photos.js";
 
 export const MEMBERS = ["Cas", "Hidde", "Lucas", "Shane", "Maurits", "Timo"];
 export const CHECKED_ON = "9 okt";
@@ -107,6 +107,25 @@ export const HOUSES = [
     pros: ["Zwembad met poolbar", "300 m van het centrum, 400 m van het strand", "In juli en augustus populair bij jongeren (volgens Sunweb)", "Goedkoopste optie met een zwembad"],
     cons: ["Eenvoudig (officieel 2 sterren)", "1 badkamer en 2 man op een bedbank", "Transfer en airco kosten extra"],
   },
+  {
+    id: "huis-anastasia", order: 6, by: "Cas", package: true,
+    title: "Luxere pakketreis met zwembad", houseName: "Appartementen Anastasia (Sunweb)",
+    sunweb: "https://www.sunweb.nl/vakantie/griekenland/kos/kos-stad/appartementen-anastasia", photos: PHOTOS_ANASTASIA,
+    house: "Gerenoveerd appartementencomplex (officieel 4 sterren) in Kos-stad · reviews 8,4/10 (426) · superieur 3-kamerappartement ±44 m² met 6 slaapplekken · 1 badkamer · uitgaansstraat 800 m · strand 800 m · supermarkt 50 m",
+    pool: true, poolNote: "gerenoveerd zwembad met ligbedden (gedeeld met het complex)",
+    // Sunweb-prijs p.p. inclusief vlucht vanaf Schiphol, alleen logies, 6 personen in 1 appartement.
+    packagePP: { p1: 789, p2: 941, p3: 996 },
+    checks: [
+      { s: "ok", t: "Vlucht + appartement in één boeking via Sunweb, vanaf Schiphol. Op 21 juli zijn er nog maar 2 van deze appartementen vrij." },
+      { s: "let", t: "Slapen: 2 slaapkamers met elk een tweepersoonsbed en een bedbank in de woonkamer. 4 man delen dus sowieso een bed." },
+      { s: "ok", t: "Airco zit bij de prijs, en je krijgt 3 dagen gratis een fiets." },
+      { s: "let", t: "Maar 1 badkamer voor 6 man, en het appartement is kleiner dan bij Angela (±44 m² tegen ±60 m²)." },
+      { s: "let", t: "Transfer van het vliegveld zit er niet bij. Een taxi doet ±30 min." },
+      { s: "info", t: "Ligt aan een drukke weg. Bagage, vliegmaatschappij en vliegtijden zie je pas in de boekingsstappen; die heb ik niet gecheckt." },
+    ],
+    pros: ["Netter en luxer: gerenoveerd, 4 sterren, betere reviews (8,4)", "Zwembad, airco inbegrepen en gratis fietsen", "Supermarkt om de hoek, 24 uur receptie"],
+    cons: ["±€130–225 p.p. duurder dan Angela", "4 man moeten een bed delen, 1 badkamer", "Iets verder van strand en centrum (±800 m–1 km)"],
+  },
 ];
 
 export const QUESTIONS = [
@@ -119,7 +138,7 @@ export const QUESTIONS = [
   {
     id: "bed-delen", order: 2, kind: "choice",
     text: "Is een bed delen oké als dat geld scheelt?",
-    context: "In de villa met zwembad en het ★5,0-appartement moet je een bed delen.",
+    context: "In de villa met zwembad, het ★5,0-appartement en Anastasia moet je een bed delen.",
     choices: ["Prima", "Liever niet", "Echt niet"],
   },
   {
