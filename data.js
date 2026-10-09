@@ -1,197 +1,106 @@
-// De vaste opties en vragen uit de groepsapp.
+// Huizen, periodes en vragen voor de Bier-StemApp.
 // Prijzen, beschikbaarheid en vluchten gecheckt op 9 oktober 2026 (Airbnb + Transavia, 6 personen).
-// Opties die vrienden zelf toevoegen staan in Firebase (collectie "options").
+// Reizen die vrienden zelf toevoegen staan in Firebase (collectie "options").
+import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA } from "./photos.js";
 
 export const MEMBERS = ["Cas", "Hidde", "Lucas", "Shane", "Maurits", "Timo"];
 export const CHECKED_ON = "9 okt";
+export const GROUP_SIZE = 6;
 // Apparaten die geblokkeerd zijn (alles wat ze schreven wordt verborgen).
 export const BLOCKED_UIDS = ["pFQSbtE8zSbFkgANLTO5j2Jv6fZ2"];
 
-import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA } from "./photos.js";
-
-const TRANSAVIA = "https://www.transavia.com/home/nl-nl";
-
-const HUIS_LUCAS = {
-  airbnb: "https://www.airbnb.nl/rooms/1586290862285761861",
-  houseName: "Enorm 4BR Retro Appartement",
-  pool: false, poolNote: "wel strand op 3 min lopen, airco en een balkon",
-  photos: PHOTOS_LUCAS,
-};
-const HUIS_SOFIE = {
-  airbnb: "https://www.airbnb.nl/rooms/24965735",
-  houseName: "Sofie's Central House",
-  pool: false, poolNote: "wel airco en een strand in de buurt",
-  photos: PHOTOS_SOFIE,
-};
-const HUIS_BESA = {
-  airbnb: "https://www.airbnb.nl/rooms/1690724744995440658",
-  houseName: "Besa Luxury Villa 2",
-  pool: false, poolNote: "",
-  photos: PHOTOS_BESA,
-};
-const HUIS_VILLA = {
-  airbnb: "https://www.airbnb.nl/rooms/1427456545646172601",
-  houseName: "Kosnian Villa",
-  pool: true, poolNote: "eigen privézwembad, tuin met barbecue en ligstoelen",
-  photos: PHOTOS_VILLA,
-};
-
-export const GENERAL = [];
-const TAXI = { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€55 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." };
-const KOFFER = { s: "let", t: "Prijs is met Basic-ticket (alleen een klein tasje). Een cabinekoffer kost ±€90 extra p.p. heen en terug (schatting uit de chat)." };
-GENERAL.push(KOFFER, TAXI);
-const BEDDEN_LUCAS = { s: "ok", house: true, t: "Slaapplekken: 2 queensize, 2 eenpersoonsbedden en een stapelbed. Iedereen kan een eigen plek hebben." };
-
-export const BASE_OPTIONS = [
+// De periodes waaruit je kiest. Vluchtprijs = heen + terug p.p., Basic-ticket.
+export const PERIODS = [
   {
-    id: "kort-21-26-juli", order: 1, seed: true, status: "open", by: "Hidde",
-    title: "Korte trip", dates: "21 – 26 juli", length: "5 nachten",
-    pricePP: 714, priceNote: "Huis €311 + vlucht €403 (Basic)", origin: "AMS",
+    id: "p1", label: "21 – 26 juli", short: "21–26 jul", nights: 5, origin: "AMS", flightPP: 403,
     flight: "Transavia vanaf Schiphol · 's avonds heen (landen rond 22:00), eind van de ochtend terug",
+    flightCheck: "Transavia vliegt elke dag vanaf Schiphol. Nu: heen €242, terug €161.",
+    note: "Past voor iedereen, maar is kort. De eerste avond gaat op aan reizen.",
+  },
+  {
+    id: "p2", label: "26 juli – 2 aug", short: "26 jul–2 aug", nights: 7, origin: "RTM", flightPP: 428,
+    flight: "Transavia vanaf Rotterdam/Den Haag · vliegt alleen op maandag en vrijdag · geen ochtendvlucht",
+    flightCheck: "26 juli en 2 aug zijn maandagen, dus Rotterdam vliegt dan. Nu: heen €228, terug €200.",
+    note: "Past het best voor Lucas. Hidde vindt een week eigenlijk te lang.",
+  },
+  {
+    id: "p3", label: "21 – 29 juli", short: "21–29 jul", nights: 8, origin: "AMS", flightPP: 390,
+    flight: "Transavia vanaf Schiphol · de terugvlucht op 29 juli is juist goedkoper",
+    flightCheck: "Vlucht is goedkoper dan bij 21–26 juli. Nu: heen €242, terug €148.",
+    note: "Lekker lang. Cas wil graag langer, Hidde vindt 8 dagen te lang.",
+  },
+];
+
+export const GENERAL = [
+  { s: "let", t: "Vluchtprijzen zijn met een Basic-ticket (alleen een klein tasje). Een cabinekoffer kost ±€90 extra p.p. heen en terug (schatting uit de chat)." },
+  { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€55 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." },
+];
+
+// prices = totaalprijs huis voor de hele groep per periode; null = niet vrij op die data.
+export const HOUSES = [
+  {
+    id: "huis-lucas", order: 1, by: "Lucas",
+    title: "Retro appartement bij het strand", houseName: "Enorm 4BR Retro Appartement",
+    airbnb: "https://www.airbnb.nl/rooms/1586290862285761861", photos: PHOTOS_LUCAS,
     house: "Huurcomplex · ★4,33 · 4 slaapkamers · 5 bedden · 2 badkamers · 3 min lopen naar het strand · inchecken op elk moment",
-    ...HUIS_LUCAS,
-    link: TRANSAVIA, linkLabel: "Transavia",
-    checks: [
-      { s: "ok", t: "Huis is vrij op 21–26 juli: €1.866 voor de hele groep." },
-      { s: "ok", t: "Transavia vliegt elke dag vanaf Schiphol. Nu: heen €242, terug €161." },
-      BEDDEN_LUCAS,
-    ],
-    pros: [
-      "Iedereen lijkt te kunnen: Cas is vrij vanaf 19 juli, Lucas heeft na de 19e geen les meer",
-      "Goedkoopste optie met het huis van Lucas",
-      "Inchecken kan op elk moment, dus laat aankomen is geen probleem",
-    ],
-    cons: [
-      "Maar 5 nachten",
-      "Eerste avond gaat op aan reizen: landen rond 22:00 en daarna nog een half uur taxi",
-      "Lucas heeft liever vanaf 26 juli (evenementen en praktijkuren)",
-    ],
+    pool: false, poolNote: "wel strand op 3 min lopen, airco en een balkon",
+    prices: { p1: 1866, p2: 2569, p3: 2921 },
+    checks: [{ s: "ok", t: "Slaapplekken: 2 queensize, 2 eenpersoonsbedden en een stapelbed. Iedereen kan een eigen plek hebben." }],
+    pros: ["Iedereen een eigen slaapplek", "3 minuten lopen naar het strand", "Laat aankomen is geen probleem"],
+    cons: ["Maar 3 reviews (★4,33)", "Geen zwembad"],
   },
   {
-    id: "goedkoop-sofie-21-26-juli", order: 2, seed: true, status: "open", by: "Hidde",
-    title: "Korte trip, goedkoper huis", dates: "21 – 26 juli", length: "5 nachten",
-    pricePP: 652, priceNote: "Huis €249 + vlucht €403 (Basic)", origin: "AMS",
-    flight: "Transavia vanaf Schiphol · zelfde vluchten als de korte trip",
+    id: "huis-sofie", order: 2, by: "Hidde",
+    title: "Goedkoopste huis, in het centrum", houseName: "Sofie's Central House",
+    airbnb: "https://www.airbnb.nl/rooms/24965735", photos: PHOTOS_SOFIE,
     house: "Appartement in het centrum · ★4,79 (90 reviews) · 3 slaapkamers · 7 bedden · 2 badkamers",
-    ...HUIS_SOFIE,
-    link: TRANSAVIA, linkLabel: "Transavia",
-    checks: [
-      { s: "ok", t: "Huis is vrij op 21–26 juli: €1.494 voor de hele groep." },
-      { s: "ok", house: true, t: "Slaapplekken: 3 kamers met elk 2 eenpersoonsbedden, plus een slaapbank. Iedereen een eigen bed." },
-    ],
-    pros: [
-      "Goedkoopste optie van allemaal",
-      "Veel bedden en goede reviews (★4,79 uit 90)",
-      "Midden in de stad",
-    ],
-    cons: [
-      "Hidde vond het huis \"heel lelijk\"",
-      "Maar 5 nachten",
-      "Eerste avond gaat op aan reizen",
-    ],
+    pool: false, poolNote: "wel airco en een strand in de buurt",
+    prices: { p1: 1494, p2: 1839, p3: 2093 },
+    checks: [{ s: "ok", t: "Slaapplekken: 3 kamers met elk 2 eenpersoonsbedden, plus een slaapbank. Iedereen een eigen bed." }],
+    pros: ["Goedkoopste huis, op elke datum", "Iedereen een eigen bed", "Midden in de stad, veel goede reviews"],
+    cons: ["Hidde vond het huis \"heel lelijk\"", "Geen zwembad"],
   },
   {
-    id: "villa-zwembad-21-26-juli", order: 2.5, seed: true, status: "open", by: "Cas",
-    title: "Villa met zwembad", dates: "21 – 26 juli", length: "5 nachten",
-    pricePP: 918, priceNote: "Huis €515 + vlucht €403 (Basic)", origin: "AMS",
-    flight: "Transavia vanaf Schiphol · zelfde vluchten als de korte trip",
+    id: "huis-villa", order: 3, by: "Cas",
+    title: "Villa met zwembad", houseName: "Kosnian Villa",
+    airbnb: "https://www.airbnb.nl/rooms/1427456545646172601", photos: PHOTOS_VILLA,
     house: "Villa · ★5,0 (15 reviews) · 3 slaapkamers met elk een queensize bed · 2 badkamers · 5 km buiten Kos-stad · Jeep inbegrepen",
-    ...HUIS_VILLA,
-    link: TRANSAVIA, linkLabel: "Transavia",
+    pool: true, poolNote: "eigen privézwembad, tuin met barbecue en ligstoelen",
+    prices: { p1: 3091, p2: 5542, p3: 5818 },
     checks: [
-      { s: "ok", t: "Villa is vrij op 21–26 juli: €3.091 voor de hele groep." },
       { s: "ok", t: "Eigen zwembad, tuin met barbecue, en een Jeep Renegade zit bij de prijs." },
       { s: "let", t: "Bedden delen: 3 slaapkamers met elk 1 queensize bed. Airbnb zelf noemt zelfs maar \"1 bed\"; even navragen bij de host." },
       { s: "let", t: "Ligt 5 km buiten de stad. In de Jeep passen 5 mensen, dus met 6 man heb je soms een taxi nodig." },
       { s: "info", t: "Inchecken vanaf 15:00 met sleutelkastje. Gratis annuleren tot 21 juni 2027." },
     ],
-    pros: [
-      "Het enige huis met een eigen zwembad",
-      "Auto erbij: makkelijk naar stranden en Tigaki",
-      "Alle 15 reviews geven 5 sterren",
-    ],
-    cons: [
-      "Duurste korte trip",
-      "Iedereen moet een bed delen",
-      "Niet in de stad: uitgaan betekent rijden of een taxi",
-    ],
+    pros: ["Het enige huis met een eigen zwembad", "Auto erbij: makkelijk naar stranden en Tigaki", "Alle 15 reviews geven 5 sterren"],
+    cons: ["Duurste huis, zeker in de week van 26 juli", "Iedereen moet een bed delen", "Niet in de stad: uitgaan betekent rijden of een taxi"],
   },
   {
-    id: "week-26-jul-2-aug", order: 3, seed: true, status: "open", by: "Lucas",
-    title: "Hele week vanaf 26 juli", dates: "26 juli – 2 aug", length: "7 nachten",
-    pricePP: 856, priceNote: "Huis €428 + vlucht €428 (Basic)", origin: "RTM",
-    flight: "Transavia vanaf Rotterdam/Den Haag · vliegt alleen op maandag en vrijdag · geen ochtendvlucht",
-    house: "Zelfde huis als de korte trip · ★4,33 · 4 slaapkamers · 5 bedden · 2 badkamers",
-    ...HUIS_LUCAS,
-    link: TRANSAVIA, linkLabel: "Transavia",
-    checks: [
-      { s: "ok", t: "Huis is vrij op 26 juli – 2 aug: €2.569 voor de hele groep." },
-      { s: "ok", t: "26 juli en 2 aug zijn maandagen, dus Rotterdam vliegt dan. Nu: heen €228, terug €200." },
-      BEDDEN_LUCAS,
-    ],
-    pros: [
-      "Past het beste bij Lucas zijn planning",
-      "Lekker lang: 7 nachten",
-      "Vanaf Rotterdam en geen vroege vlucht",
-    ],
-    cons: [
-      "Duurder dan de korte trips",
-      "Hidde vindt een week eigenlijk te lang",
-    ],
-  },
-  {
-    id: "lang-8-dagen", order: 4, seed: true, status: "open", by: "Cas",
-    title: "Lange trip", dates: "21 – 29 juli", length: "8 nachten",
-    pricePP: 877, priceNote: "Huis €487 + vlucht €390 (Basic)", origin: "AMS",
-    flight: "Transavia vanaf Schiphol · de terugvlucht op 29 juli is juist goedkoper",
-    house: "Zelfde huis als de korte trip · ★4,33 · 4 slaapkamers · 5 bedden · 2 badkamers",
-    ...HUIS_LUCAS,
-    link: TRANSAVIA, linkLabel: "Transavia",
-    checks: [
-      { s: "ok", t: "Huis is vrij op 21–29 juli: €2.921 voor de hele groep." },
-      { s: "ok", t: "Vlucht is goedkoper dan bij de korte trip. Nu: heen €242, terug €148." },
-      { s: "info", t: "3 nachten extra kosten maar ±€163 p.p. meer dan de korte trip." },
-      BEDDEN_LUCAS,
-    ],
-    pros: [
-      "3 nachten extra voor maar ±€163 meer",
-      "Genoeg tijd voor activiteiten én uitrusten",
-      "Kos is wat anders dan Texel: meer te doen",
-    ],
-    cons: [
-      "Hidde vindt 8 dagen samen te lang (Texel was al lang genoeg)",
-      "Lucas hoeft niet per se 8 nachten",
-    ],
-  },
-  {
-    id: "eerste-14-19-juli", order: 5, seed: true, status: "afgevallen",
-    statusNote: "Lucas en Cas kunnen dan niet.", by: "Hidde",
-    title: "Eerste voorstel", dates: "14 – 19 juli", length: "5 nachten",
-    pricePP: 777, priceNote: "Huis €397 + vlucht €380 (uit de chat)", origin: "AMS",
-    flight: "Transavia · met handbagagekoffer €380 pp, met ruimbagage €436 pp",
+    id: "huis-besa", order: 4, by: "Hidde",
+    title: "Luxe appartement (★5,0)", houseName: "Besa Luxury Villa 2",
+    airbnb: "https://www.airbnb.nl/rooms/1690724744995440658", photos: PHOTOS_BESA,
     house: "Huurcomplex · ★5,0 · 3 slaapkamers · 5 bedden · 2 badkamers",
-    ...HUIS_BESA,
-    checks: [
-      { s: "ok", t: "Huis is nog vrij op 14–19 juli: €2.382 voor de hele groep." },
-      { s: "nee", t: "Lucas heeft dan de Zwarte Cross en een bruiloft, Cas heeft nog stage." },
-    ],
-    pros: ["Hoogst beoordeelde huis (★5,0)"],
-    cons: ["2 mensen moeten samen in één bed"],
+    pool: false, poolNote: "",
+    prices: { p1: 2382, p2: null, p3: null },
+    checks: [{ s: "let", t: "5 bedden voor 6 man: 2 mensen moeten samen in één bed." }],
+    pros: ["Hoogst beoordeeld (★5,0)", "Het eerste huis dat Hidde voorstelde"],
+    cons: ["Alleen vrij op 21–26 juli", "2 mensen moeten een bed delen", "Geen zwembad"],
   },
 ];
 
 export const QUESTIONS = [
   {
-    id: "bed-delen", order: 1, kind: "choice",
-    text: "Is een bed of slaapbank delen oké als dat geld scheelt?",
-    context: "Lucas: een huis met gedeelde bedden kan zo'n €800 goedkoper zijn voor de hele groep. Shane heeft liever een eigen bed.",
-    choices: ["Prima", "Liever niet", "Echt niet"],
+    id: "data", order: 1, kind: "choice",
+    text: "Welke data hebben je voorkeur?",
+    context: "Bij elk huis kun je de prijs per periode bekijken.",
+    choices: PERIODS.map((p) => `${p.label} (${p.nights} nachten)`),
   },
   {
-    id: "hoe-lang", order: 2, kind: "choice",
-    text: "Hoe lang wil je weg?",
-    context: "Hidde vindt 8 dagen te lang, Cas wil juist wat langer weg.",
-    choices: ["5 nachten", "6 nachten", "7 nachten", "8 nachten"],
+    id: "bed-delen", order: 2, kind: "choice",
+    text: "Is een bed delen oké als dat geld scheelt?",
+    context: "In de villa met zwembad en het ★5,0-appartement moet je een bed delen.",
+    choices: ["Prima", "Liever niet", "Echt niet"],
   },
   {
     id: "budget", order: 3, kind: "choice",

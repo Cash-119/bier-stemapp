@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./config.js";
-import { MEMBERS, BASE_OPTIONS, QUESTIONS, CHECKED_ON, BLOCKED_UIDS, GENERAL } from "./data.js";
+import { MEMBERS, HOUSES, PERIODS, GROUP_SIZE, QUESTIONS, CHECKED_ON, BLOCKED_UIDS, GENERAL } from "./data.js";
 
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 const CHOICES = [["ja", "Ja"], ["misschien", "Misschien"], ["nee", "Nee"]];
@@ -14,7 +14,35 @@ const S = { extra: [], votes: [], answers: [], claims: [], loaded: false, claims
 const busy = new Set();
 let fs = null; // Firestore-functies + db, gevuld zodra Firebase klaar is
 
-const allOptions = () => [...BASE_OPTIONS, ...S.extra.filter((o) => !/^test-/.test(o.bySlug || ""))];
+/* ---------- huizen × periodes ---------- */
+let period = "p1";
+try { const p = localStorage.getItem("kos-periode"); if (PERIODS.some((x) => x.id === p)) period = p; } catch (e) {}
+const curPeriod = () => PERIODS.find((p) => p.id === period) || PERIODS[0];
+function setPeriod(id) {
+  if (id === period || !PERIODS.some((p) => p.id === id)) return;
+  period = id; try { localStorage.setItem("kos-periode", id); } catch (e) {}
+  renderAll();
+}
+function viewOf(h) {
+  const P = curPeriod();
+  const total = h.prices[P.id];
+  const housePP = total ? Math.round(total / GROUP_SIZE) : null;
+  return {
+    ...h, isHouse: true, seed: true, status: "open",
+    dates: P.label, length: `${P.nights} nachten`, origin: P.origin, flight: P.flight,
+    unavailable: !total,
+    pricePP: total ? housePP + P.flightPP : 0,
+    priceNote: total ? `Huis €${housePP} + vlucht €${P.flightPP} (Basic)` : "Niet vrij op deze data",
+    periodNote: P.note,
+    checks: [
+      total ? { s: "ok", t: `Huis is vrij op ${P.label}: €${total.toLocaleString("nl-NL")} voor de hele groep.` }
+            : { s: "nee", t: `Huis is niet vrij op ${P.label}. Kies andere data.` },
+      { s: "ok", t: P.flightCheck },
+      ...h.checks,
+    ],
+  };
+}
+const allOptions = () => [...HOUSES.map(viewOf), ...S.extra.filter((o) => !/^test-/.test(o.bySlug || ""))];
 
 function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
@@ -70,7 +98,7 @@ function renderProgress() {
   p.innerHTML = done >= total
     ? `<span class="prog-text ok">Alles ingevuld, top!</span><button class="btn small ghost" type="button" data-next>Bekijk de uitslag</button>`
     : `<div class="prog-bar" aria-hidden="true"><span style="width:${(done / total) * 100}%"></span></div>
-       <span class="prog-text">${v}/${trips.length} reizen · ${a}/${QUESTIONS.length} vragen</span>
+       <span class="prog-text">${v}/${trips.length} huizen · ${a}/${QUESTIONS.length} vragen</span>
        <button class="btn small ghost" type="button" data-next>Volgende</button>`;
 }
 const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
@@ -256,12 +284,18 @@ function renderStand() {
     return `<li class="st-row ${r.o.id === topId ? "lead-row" : ""} ${out ? "out" : ""}">
       <span class="rank">${out ? "–" : n}</span>
       <div class="st-main"><a class="st-title" href="#opt-${esc(r.o.id)}">${esc(r.o.title)}</a>
-        <div class="st-meta">${esc(r.o.dates)} · ${r.o.pricePP ? euro(r.o.pricePP) : "?"} pp${out ? " · valt af" : ""}</div></div>
+        <div class="st-meta">${r.o.isHouse ? (r.o.unavailable ? `niet vrij op ${esc(curPeriod().short)}` : `${euro(r.o.pricePP)} pp bij ${esc(curPeriod().short)}`) : `${esc(r.o.dates)} · ${r.o.pricePP ? euro(r.o.pricePP) : "?"} pp`}${out ? " · valt af" : ""}</div></div>
       <span class="st-score" aria-label="${r.score} punten">${r.score > 0 ? "+" : ""}${r.score}</span>
       <div class="bar" aria-hidden="true"><span class="b-ja" style="width:${(r.c.ja / tot) * 100}%"></span><span class="b-mb" style="width:${(r.c.misschien / tot) * 100}%"></span><span class="b-nee" style="width:${(r.c.nee / tot) * 100}%"></span></div>
       <div class="counts">${r.c.ja} ja · ${r.c.misschien} misschien · ${r.c.nee} nee</div>
     </li>`;
-  }).join("")}</ol>`;
+  }).join("")}</ol>${(() => {
+    const q = QUESTIONS.find((x) => x.id === "data"); if (!q) return "";
+    const ans = S.answers.filter((x) => x.question === "data");
+    const rows = q.choices.map((c) => ({ c, n: ans.filter((x) => x.value === c).length })).sort((a, b) => b.n - a.n);
+    const max = Math.max(1, ...rows.map((r) => r.n));
+    return `<div class="date-pref"><h3>Voorkeur voor data</h3>${rows.map((r) => `<div class="dp-row"><span>${esc(r.c)}</span><div class="dp-bar"><span style="width:${(r.n / max) * 100}%"></span></div><b>${r.n}</b></div>`).join("")}${ans.length ? "" : `<p class="muted" style="font-size:14px">Nog niemand heeft een voorkeur opgegeven. Dat doe je bij de vragen.</p>`}</div>`;
+  })()}`;
 }
 
 /* ---------- opties ---------- */
@@ -287,9 +321,16 @@ function passHTML(o, firstOf) {
   return `<article class="pass ${out ? "out" : ""}" id="opt-${esc(o.id)}" data-id="${esc(o.id)}">
     <div class="pass-main">
       <div class="pass-top">
-        <div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="tags" data-tags></div><h3>${esc(o.title)}</h3></div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="tags" data-tags></div><h3>${esc(o.title)}</h3>${o.isHouse ? `<span class="house-name">${esc(o.houseName)}</span>` : ""}</div>
         <span class="eyebrow">Voorstel van ${esc(o.by || "?")}</span>
       </div>
+      ${o.isHouse ? `<div class="periods" role="group" aria-label="Kies je data">
+        <span class="periods-label">Kies je data</span>
+        <div class="period-chips">${PERIODS.map((p) => { const t = o.prices[p.id];
+          return `<button type="button" class="pchip ${p.id === period ? "on" : ""} ${t ? "" : "na"}" data-period="${p.id}" aria-pressed="${p.id === period}">
+            <span class="pc-d">${esc(p.short)}</span><span class="pc-p">${t ? euro(Math.round(t / GROUP_SIZE) + p.flightPP) : "niet vrij"}</span></button>`; }).join("")}</div>
+        <p class="period-note">${esc(o.periodNote)}</p>
+      </div>` : ""}
       ${out && o.statusNote ? `<p style="color:var(--no);font-weight:600">${esc(o.statusNote)}</p>` : ""}
       ${photos}
       <dl class="facts">${o.flight ? `<dt>Vlucht</dt><dd>${esc(o.flight)}</dd>` : ""}${o.house && !sameAs ? `<dt>Huis</dt><dd>${esc(o.house)}${airbnb ? ` · <a href="${esc(airbnb)}" target="_blank" rel="noopener">Bekijk op Airbnb</a>` : ""}</dd>` : ""}${!sameAs && (o.pool === true || o.pool === false) ? `<dt>Zwembad</dt><dd>${o.pool ? "<b>Ja</b>" : "Nee"}${o.poolNote ? ` · ${esc(o.poolNote)}` : ""}</dd>` : ""}${link}</dl>
@@ -306,7 +347,7 @@ function passHTML(o, firstOf) {
     <aside class="pass-stub">
       <div><div class="stub-label">Route</div><div class="stub-code"><span>${esc(code)}</span><i></i><span>KGS</span></div></div>
       <div><div class="stub-label">Data</div><div class="stub-dates">${esc(o.dates)}</div><div class="stub-note">${esc(o.length || "")}</div></div>
-      <div><div class="stub-label">Per persoon</div><div class="price">${o.pricePP ? euro(o.pricePP) : "?"}</div>${o.priceNote ? `<div class="stub-note">${esc(o.priceNote)}</div>` : ""}</div>
+      <div><div class="stub-label">Per persoon</div><div class="price">${o.pricePP ? euro(o.pricePP) : (o.unavailable ? "—" : "?")}</div>${o.priceNote ? `<div class="stub-note">${esc(o.priceNote)}</div>` : ""}</div>
     </aside>
   </article>`;
 }
@@ -334,7 +375,7 @@ function renderPasses() {
     }
     const out = o.status === "afgevallen";
     (out ? boxOut : box).appendChild(el);
-    el.querySelector("[data-tags]").innerHTML = (o.id === topId ? `<span class="tag lead">Ligt voor</span>` : "") + (out ? `<span class="tag out">Valt af</span>` : "") + (o.length ? `<span class="tag">${esc(o.length)}</span>` : "") + (o.pool === true ? `<span class="tag pool">Zwembad</span>` : o.pool === false ? `<span class="tag">Geen zwembad</span>` : "");
+    el.querySelector("[data-tags]").innerHTML = (o.id === topId ? `<span class="tag lead">Ligt voor</span>` : "") + (out ? `<span class="tag out">Valt af</span>` : "") + (o.length && !o.isHouse ? `<span class="tag">${esc(o.length)}</span>` : "") + (o.unavailable ? `<span class="tag out">Niet vrij op deze data</span>` : "") + (o.pool === true ? `<span class="tag pool">Zwembad</span>` : o.pool === false ? `<span class="tag">Geen zwembad</span>` : "");
     const mine = myVote(o.id); const isBusy = busy.has("v:" + o.id);
     el.querySelectorAll(".vb").forEach((b) => { b.setAttribute("aria-pressed", String(mine?.choice === b.dataset.choice)); b.disabled = isBusy; });
     const t = tally(o.id);
@@ -350,6 +391,7 @@ function renderPasses() {
 }
 $("#opties").addEventListener("click", (e) => {
   const card = e.target.closest(".pass"); if (!card) return; const id = card.dataset.id;
+  const pb = e.target.closest("[data-period]"); if (pb) { setPeriod(pb.dataset.period); return; }
   const gb = e.target.closest("[data-gallery]"); if (gb) { openGallery(id, Number(gb.dataset.gallery) || 0); return; }
   const vb = e.target.closest(".vb"); if (vb) { vote(id, vb.dataset.choice); return; }
   if (e.target.closest("[data-save]")) { const inp = card.querySelector("[data-note]"); delete inp.dataset.dirty; saveNote(id, inp.value); return; }
@@ -439,7 +481,7 @@ $("#add-form").addEventListener("submit", (e) => {
 function renderGeneral() {
   const el = $("#general"); if (el.dataset.done) return; el.dataset.done = "1";
   const ICON = { ok: "✓", let: "!", nee: "✕", info: "i" };
-  el.innerHTML = `<div class="checks"><div class="checks-head">Geldt voor alle reizen</div><ul>${GENERAL.map((c) =>
+  el.innerHTML = `<div class="checks"><div class="checks-head">Geldt voor alle huizen</div><ul>${GENERAL.map((c) =>
     `<li class="ck-${esc(c.s)}"><span class="ck-ico" aria-hidden="true">${ICON[c.s] || "i"}</span><span>${esc(c.t)}</span></li>`).join("")}</ul></div>`;
 }
 function renderAll() { renderGeneral(); renderWho(); renderStand(); renderPasses(); renderQs(); $("#f-submit").disabled = busy.has("add"); }

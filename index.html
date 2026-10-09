@@ -20,14 +20,14 @@
   <header>
     <div class="route" aria-label="Amsterdam of Rotterdam naar Kos"><span>AMS / RTM</span><span class="dash"></span><span>KGS</span><span class="muted" style="font-weight:500">· vakantie Kos</span></div>
     <h1>Bier-StemApp</h1>
-    <p class="lead">Alle reizen naar Kos op een rij. Zin om mee te denken? Stem per reis <b>ja</b>, <b>misschien</b> of <b>nee</b>. Alles is vrijblijvend.</p>
+    <p class="lead">Alle reizen naar Kos op een rij. Zin om mee te denken? Stem per huis <b>ja</b>, <b>misschien</b> of <b>nee</b> en kies welke data je het liefst wilt. Alles is vrijblijvend.</p>
   </header>
 
   <div class="who" id="who">
     <div class="who-row">
       <span id="who-text">Even laden…</span>
       <nav class="topnav" aria-label="Snel naar">
-        <a href="#opties">Stemmen</a><a href="#vragen">Vragen</a><a href="#uitslag">Uitslag</a><a href="#toevoegen">Toevoegen</a>
+        <a href="#opties">Huizen</a><a href="#vragen">Vragen</a><a href="#uitslag">Uitslag</a><a href="#toevoegen">Toevoegen</a>
       </nav>
     </div>
     <div class="progress" id="progress" hidden></div>
@@ -36,9 +36,9 @@
   <div class="notice" id="notice" hidden></div>
 
   <section id="opties">
-    <div class="sec-head"><h2><span class="step">1</span>Stem per reis</h2><span class="eyebrow">Prijzen per persoon, vlucht + huis</span></div>
+    <div class="sec-head"><h2><span class="step">1</span>Stem per huis</h2><span class="eyebrow">Prijzen per persoon, vlucht + huis</span></div>
     <div class="general" id="general"></div>
-    <div class="passes" id="passes"><div class="empty">De reizen worden geladen…</div></div>
+    <div class="passes" id="passes"><div class="empty">De huizen worden geladen…</div></div>
     <details class="out-box" id="out-box" hidden>
       <summary id="out-summary">Afgevallen opties bekijken</summary>
       <div class="passes" id="passes-out"></div>
@@ -57,7 +57,7 @@
 
   <section id="toevoegen">
     <details class="add-box" id="add-box">
-      <summary><span class="plus" aria-hidden="true">+</span> Andere reis voorstellen</summary>
+      <summary><span class="plus" aria-hidden="true">+</span> Ander huis voorstellen</summary>
       <p class="muted">Een ander huis of andere data gevonden? Vul in wat je weet, de rest mag leeg blijven.</p>
       <form class="add" id="add-form" autocomplete="off">
         <label>Naam van de reis<input type="text" id="f-title" required maxlength="60" placeholder="Bijv. Appartement ★4,79"></label>
@@ -77,7 +77,7 @@
 </div>
 
 <nav class="tabbar" id="tabbar" aria-label="Snel naar">
-  <a href="#opties" data-sec="opties"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Stemmen</span></a>
+  <a href="#opties" data-sec="opties"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg><span>Huizen</span></a>
   <a href="#vragen" data-sec="vragen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 9a3 3 0 1 1 4.3 2.7c-.9.4-1.5 1.2-1.5 2.2V15M12 19h.01"/></svg><span>Vragen</span></a>
   <a href="#uitslag" data-sec="uitslag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-9"/></svg><span>Uitslag</span></a>
   <a href="#toevoegen" data-sec="toevoegen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Toevoegen</span></a>
