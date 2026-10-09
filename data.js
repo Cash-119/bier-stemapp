@@ -13,26 +13,26 @@ export const BLOCKED_UIDS = ["pFQSbtE8zSbFkgANLTO5j2Jv6fZ2"];
 export const PERIODS = [
   {
     id: "p1", label: "21 – 26 juli", short: "21–26 jul", nights: 5, origin: "AMS", flightPP: 403,
-    flight: "Transavia vanaf Schiphol · vliegt elke dag · volgens Hidde 's avonds heen (landen rond 22:00) en eind van de ochtend terug",
-    flightCheck: "Transavia vliegt elke dag vanaf Schiphol. Nu: heen €242, terug €161.",
+    flight: "Transavia vanaf Schiphol · heen wo 21 juli 18:15 → 22:45 · terug ma 26 juli 10:35 → 13:25",
+    flightCheck: "Vluchten gecheckt voor 6 personen: heen €242, terug €161 p.p. (nog 10+ stoelen voor deze prijs).",
     note: "Past voor iedereen, maar is kort. De eerste avond gaat op aan reizen.",
   },
   {
-    id: "p2", label: "26 juli – 2 aug", short: "26 jul–2 aug", nights: 7, origin: "RTM", flightPP: 428,
-    flight: "Transavia vanaf Rotterdam/Den Haag · alleen op maandag en vrijdag · 's middags heen, terugvlucht maandagavond 20:10 uit Kos (huidige dienstregeling)",
-    flightCheck: "26 juli en 2 aug zijn maandagen, dus Rotterdam vliegt dan. Nu: heen €228, terug €200.",
+    id: "p2", label: "26 juli – 2 aug", short: "26 jul–2 aug", nights: 7, origin: "RTM", flightPP: 386,
+    flight: "Transavia vanaf Rotterdam/Den Haag · heen ma 26 juli 14:55 → 19:20 · terug ma 2 aug 20:10 → 22:50",
+    flightCheck: "Vluchten gecheckt voor 6 personen: heen €228, terug €158 p.p. (nog 10+ stoelen). Rotterdam vliegt alleen op maandag en vrijdag.",
     note: "Past het best voor Lucas. Hidde vindt een week eigenlijk te lang.",
   },
   {
-    id: "p3", label: "21 – 29 juli", short: "21–29 jul", nights: 8, origin: "AMS", flightPP: 390,
-    flight: "Transavia vanaf Schiphol · vliegt elke dag · de terugvlucht op 29 juli is juist goedkoper",
-    flightCheck: "Vlucht is goedkoper dan bij 21–26 juli. Nu: heen €242, terug €148.",
+    id: "p3", label: "21 – 29 juli", short: "21–29 jul", nights: 8, origin: "AMS", flightPP: 403,
+    flight: "Transavia vanaf Schiphol · heen wo 21 juli 18:15 → 22:45 · terug do 29 juli 12:10 → 15:00",
+    flightCheck: "Vluchten gecheckt voor 6 personen: heen €242, terug €161 p.p. (nog 10+ stoelen voor deze prijs).",
     note: "Lekker lang. Cas wil graag langer, Hidde vindt 8 dagen te lang.",
   },
 ];
 
 export const GENERAL = [
-  { s: "let", t: "Vliegprijzen zijn de laagste prijs voor 1 persoon. Voor 6 stoelen op dezelfde vlucht kan het iets duurder uitvallen, en prijzen veranderen elke dag." },
+  { s: "info", t: "Alle prijzen zijn nagekeken voor 6 personen, maar ze veranderen elke dag. Check ze vlak voor het boeken nog een keer." },
   { s: "let", t: "Vluchtprijzen zijn met een Basic-ticket (alleen een klein tasje). Een cabinekoffer kost ±€90 extra p.p. heen en terug (schatting uit de chat)." },
   { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€50–60 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." },
 ];
