@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./config.js";
-import { MEMBERS, BASE_OPTIONS, QUESTIONS, CHECKED_ON, BLOCKED_UIDS } from "./data.js";
+import { MEMBERS, BASE_OPTIONS, QUESTIONS, CHECKED_ON, BLOCKED_UIDS, GENERAL } from "./data.js";
 
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 const CHOICES = [["ja", "Ja"], ["misschien", "Misschien"], ["nee", "Nee"]];
@@ -265,7 +265,8 @@ function renderStand() {
 }
 
 /* ---------- opties ---------- */
-function passHTML(o) {
+function passHTML(o, firstOf) {
+  const sameAs = firstOf && firstOf.id !== o.id ? firstOf : null;
   const out = o.status === "afgevallen";
   const code = (o.origin || "AMS").toUpperCase().slice(0, 3);
   const li = (a) => (a || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li class='muted'>Nog niets genoemd</li>";
@@ -273,11 +274,15 @@ function passHTML(o) {
   const canDelete = !o.seed && o.bySlug && mySlug && o.bySlug === mySlug;
   const airbnb = o.airbnb && /^https:\/\/www\.airbnb\./.test(o.airbnb) ? o.airbnb : "";
   const ph = o.photos || [];
-  const photos = ph.length ? `<div class="photos" role="list" aria-label="Foto's van ${esc(o.houseName || o.title)}">${ph.slice(0, 8).map((u, i) =>
+  const photos = sameAs && ph.length ? `<div class="same-house">
+      <button type="button" class="ph-mini" data-gallery="0" aria-label="Bekijk de foto's"><img src="${esc(ph[0])}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>
+      <div><b>Zelfde huis als <a href="#opt-${esc(sameAs.id)}">${esc(sameAs.title)}</a></b><br><button type="button" class="linkbtn" data-gallery="0">Bekijk alle ${ph.length} foto's</button></div>
+    </div>` : ph.length ? `<div class="photos" role="list" aria-label="Foto's van ${esc(o.houseName || o.title)}">${ph.slice(0, 8).map((u, i) =>
       `<button type="button" role="listitem" class="ph" data-gallery="${i}"><img src="${esc(u)}" alt="Foto ${i + 1} van ${esc(o.houseName || o.title)}" loading="${i ? "lazy" : "eager"}" referrerpolicy="no-referrer"></button>`).join("")}${ph.length > 8 ? `<button type="button" class="ph more" data-gallery="8"><span>+${ph.length - 8}</span>meer foto's</button>` : ""}</div>
       <div class="photo-row"><button type="button" class="btn ghost small" data-gallery="0">Bekijk alle ${ph.length} foto's</button><span class="photo-credit">Foto's van Airbnb</span></div>` : "";
   const ICON = { ok: "✓", let: "!", nee: "✕", info: "i" };
-  const checks = (o.checks || []).length ? `<div class="checks"><div class="checks-head">Nagekeken op ${esc(CHECKED_ON)}</div><ul>${o.checks.map((c) =>
+  const ck = (o.checks || []).filter((c) => !(sameAs && c.house));
+  const checks = ck.length ? `<div class="checks"><div class="checks-head">Nagekeken op ${esc(CHECKED_ON)}</div><ul>${ck.map((c) =>
       `<li class="ck-${esc(c.s)}"><span class="ck-ico" aria-hidden="true">${ICON[c.s] || "i"}</span><span>${esc(c.t)}</span></li>`).join("")}</ul></div>` : "";
   return `<article class="pass ${out ? "out" : ""}" id="opt-${esc(o.id)}" data-id="${esc(o.id)}">
     <div class="pass-main">
@@ -287,7 +292,7 @@ function passHTML(o) {
       </div>
       ${out && o.statusNote ? `<p style="color:var(--no);font-weight:600">${esc(o.statusNote)}</p>` : ""}
       ${photos}
-      <dl class="facts">${o.flight ? `<dt>Vlucht</dt><dd>${esc(o.flight)}</dd>` : ""}${o.house ? `<dt>Huis</dt><dd>${esc(o.house)}${airbnb ? ` · <a href="${esc(airbnb)}" target="_blank" rel="noopener">Bekijk op Airbnb</a>` : ""}</dd>` : ""}${o.pool === true || o.pool === false ? `<dt>Zwembad</dt><dd>${o.pool ? "<b>Ja</b>" : "Nee"}${o.poolNote ? ` · ${esc(o.poolNote)}` : ""}</dd>` : ""}${link}</dl>
+      <dl class="facts">${o.flight ? `<dt>Vlucht</dt><dd>${esc(o.flight)}</dd>` : ""}${o.house && !sameAs ? `<dt>Huis</dt><dd>${esc(o.house)}${airbnb ? ` · <a href="${esc(airbnb)}" target="_blank" rel="noopener">Bekijk op Airbnb</a>` : ""}</dd>` : ""}${!sameAs && (o.pool === true || o.pool === false) ? `<dt>Zwembad</dt><dd>${o.pool ? "<b>Ja</b>" : "Nee"}${o.poolNote ? ` · ${esc(o.poolNote)}` : ""}</dd>` : ""}${link}</dl>
       ${checks}
       <div class="pc"><div class="pro"><h4>Voordelen</h4><ul>${li(o.pros)}</ul></div><div class="con"><h4>Nadelen</h4><ul>${li(o.cons)}</ul></div></div>
       <div class="vote">
@@ -316,11 +321,14 @@ function renderPasses() {
   $("#out-box").hidden = !nOut;
   $("#out-summary").textContent = nOut === 1 ? "1 afgevallen optie bekijken" : `${nOut} afgevallen opties bekijken`;
   const topId = ranked().find((x) => x.o.status !== "afgevallen" && x.score > 0)?.o.id;
+  const firstByHouse = {};
+  order.forEach((o) => { if (o.houseName && o.status !== "afgevallen" && !firstByHouse[o.houseName]) firstByHouse[o.houseName] = o; });
   order.forEach((o) => {
-    const sig = JSON.stringify(o) + "|" + (me || "");
+    const firstOf = o.status !== "afgevallen" ? firstByHouse[o.houseName] : null;
+    const sig = JSON.stringify(o) + "|" + (me || "") + "|" + (firstOf ? firstOf.id : "");
     let el = $("#opties").querySelector(`.pass[data-id="${CSS.escape(o.id)}"]`);
     if (!el || sigs[o.id] !== sig) {
-      const tmp = document.createElement("div"); tmp.innerHTML = passHTML(o); const nel = tmp.firstElementChild;
+      const tmp = document.createElement("div"); tmp.innerHTML = passHTML(o, firstOf); const nel = tmp.firstElementChild;
       if (el) { const draft = el.querySelector("[data-note]").value; el.replaceWith(nel); nel.querySelector("[data-note]").value = draft; }
       el = nel; sigs[o.id] = sig;
     }
@@ -428,7 +436,13 @@ $("#add-form").addEventListener("submit", (e) => {
   });
 });
 
-function renderAll() { renderWho(); renderStand(); renderPasses(); renderQs(); $("#f-submit").disabled = busy.has("add"); }
+function renderGeneral() {
+  const el = $("#general"); if (el.dataset.done) return; el.dataset.done = "1";
+  const ICON = { ok: "✓", let: "!", nee: "✕", info: "i" };
+  el.innerHTML = `<div class="checks"><div class="checks-head">Geldt voor alle reizen</div><ul>${GENERAL.map((c) =>
+    `<li class="ck-${esc(c.s)}"><span class="ck-ico" aria-hidden="true">${ICON[c.s] || "i"}</span><span>${esc(c.t)}</span></li>`).join("")}</ul></div>`;
+}
+function renderAll() { renderGeneral(); renderWho(); renderStand(); renderPasses(); renderQs(); $("#f-submit").disabled = busy.has("add"); }
 
 /* ---------- start ---------- */
 renderNotice();

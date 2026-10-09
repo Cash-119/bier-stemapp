@@ -36,9 +36,11 @@ const HUIS_VILLA = {
   photos: PHOTOS_VILLA,
 };
 
+export const GENERAL = [];
 const TAXI = { s: "info", t: "Vliegveld → Kos-stad: ±30 min met de taxi, ±€55 per auto. Met 6 man en bagage heb je 2 taxi's of een busje nodig." };
 const KOFFER = { s: "let", t: "Prijs is met Basic-ticket (alleen een klein tasje). Een cabinekoffer kost ±€90 extra p.p. heen en terug (schatting uit de chat)." };
-const BEDDEN_LUCAS = { s: "ok", t: "Slaapplekken: 2 queensize, 2 eenpersoonsbedden en een stapelbed. Iedereen kan een eigen plek hebben." };
+GENERAL.push(KOFFER, TAXI);
+const BEDDEN_LUCAS = { s: "ok", house: true, t: "Slaapplekken: 2 queensize, 2 eenpersoonsbedden en een stapelbed. Iedereen kan een eigen plek hebben." };
 
 export const BASE_OPTIONS = [
   {
@@ -52,7 +54,7 @@ export const BASE_OPTIONS = [
     checks: [
       { s: "ok", t: "Huis is vrij op 21–26 juli: €1.866 voor de hele groep." },
       { s: "ok", t: "Transavia vliegt elke dag vanaf Schiphol. Nu: heen €242, terug €161." },
-      BEDDEN_LUCAS, KOFFER, TAXI,
+      BEDDEN_LUCAS,
     ],
     pros: [
       "Iedereen lijkt te kunnen: Cas is vrij vanaf 19 juli, Lucas heeft na de 19e geen les meer",
@@ -75,8 +77,7 @@ export const BASE_OPTIONS = [
     link: TRANSAVIA, linkLabel: "Transavia",
     checks: [
       { s: "ok", t: "Huis is vrij op 21–26 juli: €1.494 voor de hele groep." },
-      { s: "ok", t: "Slaapplekken: 3 kamers met elk 2 eenpersoonsbedden, plus een slaapbank. Iedereen een eigen bed." },
-      KOFFER, TAXI,
+      { s: "ok", house: true, t: "Slaapplekken: 3 kamers met elk 2 eenpersoonsbedden, plus een slaapbank. Iedereen een eigen bed." },
     ],
     pros: [
       "Goedkoopste optie van allemaal",
@@ -103,7 +104,6 @@ export const BASE_OPTIONS = [
       { s: "let", t: "Bedden delen: 3 slaapkamers met elk 1 queensize bed. Airbnb zelf noemt zelfs maar \"1 bed\"; even navragen bij de host." },
       { s: "let", t: "Ligt 5 km buiten de stad. In de Jeep passen 5 mensen, dus met 6 man heb je soms een taxi nodig." },
       { s: "info", t: "Inchecken vanaf 15:00 met sleutelkastje. Gratis annuleren tot 21 juni 2027." },
-      KOFFER, TAXI,
     ],
     pros: [
       "Het enige huis met een eigen zwembad",
@@ -127,7 +127,7 @@ export const BASE_OPTIONS = [
     checks: [
       { s: "ok", t: "Huis is vrij op 26 juli – 2 aug: €2.569 voor de hele groep." },
       { s: "ok", t: "26 juli en 2 aug zijn maandagen, dus Rotterdam vliegt dan. Nu: heen €228, terug €200." },
-      BEDDEN_LUCAS, KOFFER, TAXI,
+      BEDDEN_LUCAS,
     ],
     pros: [
       "Past het beste bij Lucas zijn planning",
@@ -151,7 +151,7 @@ export const BASE_OPTIONS = [
       { s: "ok", t: "Huis is vrij op 21–29 juli: €2.921 voor de hele groep." },
       { s: "ok", t: "Vlucht is goedkoper dan bij de korte trip. Nu: heen €242, terug €148." },
       { s: "info", t: "3 nachten extra kosten maar ±€163 p.p. meer dan de korte trip." },
-      BEDDEN_LUCAS, KOFFER,
+      BEDDEN_LUCAS,
     ],
     pros: [
       "3 nachten extra voor maar ±€163 meer",
