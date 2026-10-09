@@ -168,3 +168,11 @@ form.add .actions{grid-column:1/-1;display:flex;gap:12px;align-items:center;flex
   .who nav{margin-left:0}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* naam vastzetten */
+.name-chips button.taken{opacity:.7;border-style:dashed}
+.name-chips button.taken::after{content:" 🔒";font-size:12px}
+.pin{font-family:var(--mono);font-size:28px;letter-spacing:.5em;text-align:center;padding:10px 0 10px .5em!important;max-width:220px}
+.gate-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.gate-err{color:var(--no);font-weight:600;font-size:14px;min-height:20px}
+.lock{font-size:13px;color:var(--muted)}

@@ -10,44 +10,138 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const slug = (n) => String(n).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "anoniem";
 const euro = (n) => "€" + Number(n).toLocaleString("nl-NL");
 
-let me = null;
-try { me = localStorage.getItem("kos-naam"); } catch (e) {}
-
-const S = { extra: [], votes: [], answers: [], loaded: false, error: null };
+const S = { extra: [], votes: [], answers: [], claims: [], loaded: false, claimsLoaded: false, error: null, uid: null, authError: null };
 const busy = new Set();
-let fs = null; // { db, doc, setDoc, deleteDoc, addDoc, collection }
+let fs = null; // Firestore-functies + db, gevuld zodra Firebase klaar is
 
 const allOptions = () => [...BASE_OPTIONS, ...S.extra];
 
 function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
-  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2200);
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600);
 }
 
-/* ---------- naam ---------- */
+/* ---------- naam: vast per apparaat, met pincode ----------
+   claims/<slug>  {name, uid}  openbaar: wie welke naam heeft
+   secrets/<slug> {pin}        onleesbaar, alleen de regels kijken erin
+   logins/<uid>   {slug, pin}  inlogpoging op een nieuw apparaat
+*/
+let me = null;      // naam van dit apparaat, afgeleid uit claims
+let mySlug = null;
+let gateState = { mode: "pick", name: "", err: "" };
+
+function deriveMe() {
+  const mine = S.uid ? S.claims.filter((c) => c.uid === S.uid) : [];
+  let pick = mine[0] || null;
+  try { const pref = localStorage.getItem("kos-naam"); const hit = mine.find((c) => c.name === pref); if (hit) pick = hit; } catch (e) {}
+  me = pick ? pick.name : null;
+  mySlug = pick ? pick.id : null;
+  if (me) { try { localStorage.setItem("kos-naam", me); } catch (e) {} }
+}
+
 function renderWho() {
-  $("#who-text").innerHTML = me ? `Je stemt als <strong>${esc(me)}</strong>.` : "Je hebt nog geen naam gekozen.";
-  $("#who-change").textContent = me ? "Wissel" : "Naam kiezen";
+  $("#who-text").innerHTML = me
+    ? `Je stemt als <strong>${esc(me)}</strong> <span class="lock">· vastgezet op dit apparaat</span>`
+    : S.claimsLoaded ? `Je hebt nog geen naam gekozen. <button class="linkbtn" type="button" id="who-pick">Naam kiezen</button>` : "Even laden…";
+  $("#who-pick")?.addEventListener("click", () => openGate());
 }
-function openGate() {
-  const names = [...new Map([...MEMBERS, ...S.votes.map((v) => v.name)].map((n) => [slug(n), n])).values()];
-  $("#name-chips").innerHTML = names.map((n) => `<button type="button" data-name="${esc(n)}">${esc(n)}</button>`).join("");
+
+function openGate(mode = "pick", name = "", err = "") {
+  gateState = { mode, name, err };
+  renderGate();
   $("#gate").hidden = false;
+  setTimeout(() => $("#gate-card input")?.focus(), 30);
 }
-function setName(n) {
-  n = String(n || "").trim().slice(0, 24); if (!n) return;
-  me = n; try { localStorage.setItem("kos-naam", n); } catch (e) {}
-  $("#gate").hidden = true; renderAll();
+function closeGate() { $("#gate").hidden = true; }
+
+function renderGate() {
+  const card = $("#gate-card");
+  const { mode, name, err } = gateState;
+  if (!fs || !S.claimsLoaded) {
+    card.innerHTML = `<h2 id="gate-title">Wie ben jij?</h2><p class="muted">${S.authError ? "Inloggen bij de stemdatabase lukte niet. Ververs de pagina en probeer het opnieuw." : "Even laden…"}</p>
+      <div class="gate-actions"><button class="btn ghost small" type="button" data-close>Eerst rondkijken</button></div>`;
+    return;
+  }
+  if (mode === "pick") {
+    const taken = new Set(S.claims.map((c) => c.id));
+    const names = [...new Map([...MEMBERS, ...S.claims.map((c) => c.name)].map((n) => [slug(n), n])).values()];
+    card.innerHTML = `<h2 id="gate-title">Wie ben jij?</h2>
+      <p class="muted">Kies je naam en bedenk een pincode van 4 cijfers. Je naam blijft daarna vastgezet op dit apparaat, zodat niemand anders onder jouw naam kan stemmen.</p>
+      <div class="name-chips">${names.map((n) => `<button type="button" data-name="${esc(n)}" class="${taken.has(slug(n)) ? "taken" : ""}">${esc(n)}</button>`).join("")}</div>
+      <form data-other class="gate-actions"><input type="text" id="gate-input" maxlength="24" placeholder="Andere naam" aria-label="Andere naam" style="flex:1;min-width:0"><button class="btn" type="submit">Verder</button></form>
+      <div class="gate-actions"><button class="linkbtn" type="button" data-close>Eerst rondkijken</button></div>`;
+    return;
+  }
+  const isNew = mode === "new";
+  card.innerHTML = `<h2 id="gate-title">${isNew ? `Hoi ${esc(name)}!` : `Ben jij ${esc(name)}?`}</h2>
+    <p class="muted">${isNew
+      ? "Kies een pincode van 4 cijfers en onthoud hem goed. Met deze code kun je later ook op een ander apparaat (of in een andere browser) als jezelf stemmen."
+      : "Deze naam is al vastgezet. Vul je pincode in om ook op dit apparaat als " + esc(name) + " te stemmen."}</p>
+    <form data-pin class="gate-actions">
+      <input class="pin" type="text" id="gate-pin" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" placeholder="••••" aria-label="Pincode van 4 cijfers">
+      <button class="btn" type="submit" ${busy.has("gate") ? "disabled" : ""}>${isNew ? "Naam vastzetten" : "Inloggen"}</button>
+    </form>
+    <p class="gate-err" role="alert">${esc(err)}</p>
+    <div class="gate-actions"><button class="linkbtn" type="button" data-back>Andere naam kiezen</button></div>`;
 }
-$("#name-chips").addEventListener("click", (e) => { const b = e.target.closest("button[data-name]"); if (b) setName(b.dataset.name); });
-$("#gate-form").addEventListener("submit", (e) => { e.preventDefault(); setName($("#gate-input").value); });
-$("#who-change").addEventListener("click", openGate);
-$("#gate").addEventListener("click", (e) => { if (e.target.id === "gate" && me) $("#gate").hidden = true; });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && me) $("#gate").hidden = true; });
+
+function chooseName(raw) {
+  const n = String(raw || "").trim().replace(/\s+/g, " ").slice(0, 24);
+  if (!n) return;
+  if (slug(n) === "anoniem") { openGate("pick", "", ""); return; }
+  const claim = S.claims.find((c) => c.id === slug(n));
+  if (claim) openGate("login", claim.name);
+  else openGate("new", n);
+}
+
+async function submitPin(pin) {
+  const { mode, name } = gateState;
+  if (!/^[0-9]{4}$/.test(pin)) { gateState.err = "Vul precies 4 cijfers in."; renderGate(); return; }
+  if (busy.has("gate")) return;
+  busy.add("gate"); gateState.err = ""; renderGate();
+  const s = slug(name);
+  try {
+    if (mode === "new") {
+      const b = fs.writeBatch(fs.db);
+      b.set(fs.doc(fs.db, "claims", s), { name, uid: S.uid, at: Date.now() });
+      b.set(fs.doc(fs.db, "secrets", s), { pin });
+      await b.commit();
+      toast(`Welkom ${name}! Je naam staat vast.`);
+    } else {
+      await fs.setDoc(fs.doc(fs.db, "logins", S.uid), { slug: s, pin });
+      await fs.setDoc(fs.doc(fs.db, "claims", s), { name, uid: S.uid, at: Date.now() });
+      toast(`Ingelogd als ${name}`);
+    }
+    try { localStorage.setItem("kos-naam", name); } catch (e) {}
+    S.claims = [...S.claims.filter((c) => c.id !== s), { id: s, name, uid: S.uid }];
+    deriveMe(); closeGate(); renderAll();
+  } catch (e) {
+    console.error(e);
+    gateState.err = mode === "new"
+      ? "Die naam werd net door iemand anders gekozen. Kies een andere naam."
+      : "Die pincode klopt niet. Probeer het opnieuw.";
+    if (mode === "new") gateState.mode = "pick";
+    renderGate();
+  } finally { busy.delete("gate"); }
+}
+
+$("#gate-card").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-name]"); if (b) { chooseName(b.dataset.name); return; }
+  if (e.target.closest("[data-close]")) { closeGate(); return; }
+  if (e.target.closest("[data-back]")) { openGate("pick"); return; }
+});
+$("#gate-card").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (e.target.matches("[data-other]")) chooseName($("#gate-input").value);
+  if (e.target.matches("[data-pin]")) submitPin($("#gate-pin").value.trim());
+});
+$("#gate-card").addEventListener("input", (e) => { if (e.target.id === "gate-pin") e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
+$("#gate").addEventListener("click", (e) => { if (e.target.id === "gate") closeGate(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeGate(); });
 
 /* ---------- data ---------- */
-const myVote = (optId) => (me ? S.votes.find((v) => v.option === optId && slug(v.name) === slug(me)) || null : null);
-const myAnswer = (qid) => (me ? S.answers.find((a) => a.question === qid && slug(a.name) === slug(me)) || null : null);
+const myVote = (optId) => (mySlug ? S.votes.find((v) => v.option === optId && (v.slug || slug(v.name)) === mySlug) || null : null);
+const myAnswer = (qid) => (mySlug ? S.answers.find((a) => a.question === qid && (a.slug || slug(a.name)) === mySlug) || null : null);
 function tally(optId) {
   const vs = S.votes.filter((v) => v.option === optId);
   const c = { ja: 0, misschien: 0, nee: 0 }; vs.forEach((v) => { if (c[v.choice] != null) c[v.choice]++; });
@@ -66,23 +160,23 @@ async function guarded(key, fn) {
   if (!fs) { toast("De stemmen zijn nog niet verbonden. Probeer het zo opnieuw."); return; }
   if (busy.has(key)) return; busy.add(key); renderAll();
   try { await fn(); }
-  catch (e) { console.error(e); toast("Opslaan lukte niet. Check je internet en probeer het opnieuw."); }
+  catch (e) { console.error(e); toast("Opslaan lukte niet. Ververs de pagina en probeer het opnieuw."); }
   finally { busy.delete(key); renderAll(); }
 }
 function vote(optId, choice) {
   if (!me) { openGate(); return; }
   const cur = myVote(optId);
-  const ref = fs && fs.doc(fs.db, "votes", optId + "__" + slug(me));
   guarded("v:" + optId, async () => {
+    const ref = fs.doc(fs.db, "votes", optId + "__" + mySlug);
     if (cur && cur.choice === choice) await fs.deleteDoc(ref);
-    else await fs.setDoc(ref, { option: optId, name: me, choice, note: cur?.note || "", at: Date.now() });
+    else await fs.setDoc(ref, { option: optId, name: me, slug: mySlug, choice, note: cur?.note || "", at: Date.now() });
   });
 }
 function saveNote(optId, note) {
   const cur = myVote(optId); if (!cur) return;
   note = note.trim().slice(0, 280);
   guarded("v:" + optId, async () => {
-    await fs.setDoc(fs.doc(fs.db, "votes", optId + "__" + slug(me)), { option: cur.option, name: cur.name, choice: cur.choice, note, at: Date.now() });
+    await fs.setDoc(fs.doc(fs.db, "votes", optId + "__" + mySlug), { option: optId, name: me, slug: mySlug, choice: cur.choice, note, at: Date.now() });
     toast("Opmerking opgeslagen");
   });
 }
@@ -92,9 +186,9 @@ function answer(qid, value) {
   const q = QUESTIONS.find((x) => x.id === qid);
   const off = (q.kind === "choice" && cur && cur.value === value) || !value;
   guarded("a:" + qid, async () => {
-    const ref = fs.doc(fs.db, "answers", qid + "__" + slug(me));
+    const ref = fs.doc(fs.db, "answers", qid + "__" + mySlug);
     if (off) await fs.deleteDoc(ref);
-    else await fs.setDoc(ref, { question: qid, name: me, value, at: Date.now() });
+    else await fs.setDoc(ref, { question: qid, name: me, slug: mySlug, value, at: Date.now() });
     if (q.kind === "text") toast("Antwoord opgeslagen");
   });
 }
@@ -143,7 +237,7 @@ function passHTML(o) {
   const code = (o.origin || "AMS").toUpperCase().slice(0, 3);
   const li = (a) => (a || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li class='muted'>Nog niets genoemd</li>";
   const link = o.link && /^https:\/\//.test(o.link) ? `<dt>Link</dt><dd><a href="${esc(o.link)}" target="_blank" rel="noopener">${esc(o.linkLabel || "Bekijken")}</a></dd>` : "";
-  const canDelete = !o.seed && o.by && me && slug(o.by) === slug(me);
+  const canDelete = !o.seed && o.bySlug && mySlug && o.bySlug === mySlug;
   return `<article class="pass ${out ? "out" : ""}" id="opt-${esc(o.id)}" data-id="${esc(o.id)}">
     <div class="pass-main">
       <div class="pass-top">
@@ -191,7 +285,7 @@ function renderPasses() {
     el.querySelectorAll(".vb").forEach((b) => { b.setAttribute("aria-pressed", String(mine?.choice === b.dataset.choice)); b.disabled = isBusy; });
     const t = tally(o.id);
     el.querySelector("[data-voters]").innerHTML = t.vs.length
-      ? [...t.vs].sort((a, b) => "jmn".indexOf(a.choice[0]) - "jmn".indexOf(b.choice[0])).map((v) => `<span class="chip ${esc(v.choice)} ${me && slug(v.name) === slug(me) ? "me" : ""}">${esc(v.name)} <span class="n">${esc(v.choice)}</span></span>`).join("")
+      ? [...t.vs].sort((a, b) => "jmn".indexOf(a.choice[0]) - "jmn".indexOf(b.choice[0])).map((v) => `<span class="chip ${esc(v.choice)} ${mySlug && (v.slug || slug(v.name)) === mySlug ? "me" : ""}">${esc(v.name)} <span class="n">${esc(v.choice)}</span></span>`).join("")
       : `<span class="muted" style="font-size:14px">${S.loaded ? "Nog niemand gestemd." : "Stemmen laden…"}</span>`;
     const inp = el.querySelector("[data-note]");
     inp.disabled = !mine; el.querySelector("[data-save]").disabled = !mine || isBusy;
@@ -261,7 +355,7 @@ $("#add-form").addEventListener("submit", (e) => {
     pricePP: Number(v("#f-price")) || 0, flight: fl.slice(0, 160), house: v("#f-house").slice(0, 160),
     link: link.slice(0, 400), linkLabel: "Bekijken", pros: lines($("#f-pros").value), cons: lines($("#f-cons").value),
     origin: /rotterdam|rtm/i.test(fl) ? "RTM" : /eindhoven|ein\b/i.test(fl) ? "EIN" : /weeze|nrn/i.test(fl) ? "NRN" : "AMS",
-    status: "open", by: me, order: Date.now(), seed: false,
+    status: "open", by: me, bySlug: mySlug, order: Date.now(), seed: false,
   };
   guarded("add", async () => {
     const ref = await fs.addDoc(fs.collection(fs.db, "options"), data);
@@ -275,26 +369,44 @@ function renderAll() { renderWho(); renderStand(); renderPasses(); renderQs(); $
 /* ---------- start ---------- */
 renderNotice();
 renderAll();
-if (!me) openGate();
 
 (async () => {
   if (!firebaseConfig) return;
   try {
     const { initializeApp } = await import(FB + "firebase-app.js");
     const f = await import(FB + "firebase-firestore.js");
+    const au = await import(FB + "firebase-auth.js");
     const app = initializeApp(firebaseConfig);
-    fs = { db: f.getFirestore(app), doc: f.doc, setDoc: f.setDoc, deleteDoc: f.deleteDoc, addDoc: f.addDoc, collection: f.collection };
+    const auth = au.getAuth(app);
+    const user = await new Promise((resolve) => {
+      const off = au.onAuthStateChanged(auth, (u) => { off(); resolve(u); });
+    });
+    try {
+      S.uid = (user || (await au.signInAnonymously(auth)).user).uid;
+    } catch (e) {
+      console.error(e); S.authError = e;
+    }
+    fs = { db: f.getFirestore(app), doc: f.doc, setDoc: f.setDoc, deleteDoc: f.deleteDoc, addDoc: f.addDoc, collection: f.collection, writeBatch: f.writeBatch };
     const fail = (err) => { console.error(err); S.error = err; renderNotice(); };
-    let pending = 3;
-    const ready = () => { if (--pending === 0) { S.loaded = true; } renderAll(); };
-    const sub = (name, key) => {
+    let pending = 4;
+    const ready = () => { if (--pending === 0) S.loaded = true; };
+    const sub = (name, key, after) => {
       let first = true;
       f.onSnapshot(f.collection(fs.db, name), (snap) => {
         S[key] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         if (S.error) { S.error = null; renderNotice(); }
-        if (first) { first = false; ready(); } else renderAll();
+        if (first) { first = false; ready(); }
+        if (after) after();
+        renderAll();
       }, fail);
     };
+    sub("claims", "claims", () => {
+      const firstLoad = !S.claimsLoaded;
+      S.claimsLoaded = true;
+      deriveMe();
+      if (firstLoad && !me) openGate();
+      else if (!$("#gate").hidden && gateState.mode === "pick") renderGate();
+    });
     sub("votes", "votes"); sub("answers", "answers"); sub("options", "extra");
   } catch (err) { console.error(err); S.error = err; renderNotice(); }
 })();

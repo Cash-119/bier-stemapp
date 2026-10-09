@@ -25,7 +25,7 @@
 
   <div class="who" id="who">
     <span id="who-text">Je hebt nog geen naam gekozen.</span>
-    <button class="linkbtn" id="who-change" type="button">Naam kiezen</button>
+    <button class="linkbtn" id="who-change" type="button" hidden>Naam kiezen</button>
     <nav aria-label="Secties"><a href="#stand">Stand</a><a href="#opties">Opties</a><a href="#vragen">Vragen</a><a href="#toevoegen">Optie toevoegen</a></nav>
   </div>
 
@@ -65,12 +65,7 @@
 </div>
 
 <div class="gate" id="gate" hidden>
-  <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title">
-    <h2 id="gate-title">Wie ben jij?</h2>
-    <p class="muted">Je naam komt bij je stemmen te staan. Deze browser onthoudt hem, dus je hoeft hem maar één keer te kiezen.</p>
-    <div class="name-chips" id="name-chips"></div>
-    <form id="gate-form"><input type="text" id="gate-input" maxlength="24" placeholder="Andere naam" aria-label="Andere naam"><button class="btn" type="submit">Ga</button></form>
-  </div>
+  <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title" id="gate-card"></div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
