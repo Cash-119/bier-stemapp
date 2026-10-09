@@ -1,4 +1,4 @@
-# Stembureau Kos
+# Bier-StemApp
 
 Stemsite voor onze vakantie naar Kos. Alle opties uit de groepsapp op een rij, met prijzen, voor- en nadelen, en live stemmen.
 

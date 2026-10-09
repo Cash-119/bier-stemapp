@@ -44,10 +44,61 @@ function deriveMe() {
 
 function renderWho() {
   $("#who-text").innerHTML = me
-    ? `Je stemt als <strong>${esc(me)}</strong> <span class="lock">· vastgezet op dit apparaat</span>`
-    : S.claimsLoaded ? `Je hebt nog geen naam gekozen. <button class="linkbtn" type="button" id="who-pick">Naam kiezen</button>` : "Even laden…";
-  $("#who-pick")?.addEventListener("click", () => openGate());
+    ? `Hoi <strong>${esc(me)}</strong> <span class="lock" title="Je naam staat vast op dit apparaat">🔒</span>`
+    : S.claimsLoaded ? "Je hebt nog geen naam gekozen." : "Even laden…";
+  renderProgress();
 }
+
+const openTrips = () => allOptions().filter((o) => o.status !== "afgevallen");
+function nextTarget() {
+  const o = openTrips().find((x) => !myVote(x.id));
+  if (o) return document.getElementById("opt-" + o.id);
+  const q = QUESTIONS.find((x) => !myAnswer(x.id));
+  if (q) return document.querySelector(`.q[data-id="${q.id}"]`);
+  return $("#uitslag");
+}
+function renderProgress() {
+  const p = $("#progress");
+  if (!S.claimsLoaded) { p.hidden = true; return; }
+  p.hidden = false;
+  if (!me) {
+    p.innerHTML = `<span class="prog-text">Kies eerst je naam, dan kun je stemmen.</span><button class="btn small" type="button" data-pickname>Naam kiezen</button>`;
+    return;
+  }
+  const trips = openTrips();
+  const v = trips.filter((o) => myVote(o.id)).length;
+  const a = QUESTIONS.filter((q) => myAnswer(q.id)).length;
+  const total = trips.length + QUESTIONS.length, done = v + a;
+  p.innerHTML = done >= total
+    ? `<span class="prog-text ok">Klaar! Je hebt alles ingevuld.</span><button class="btn small ghost" type="button" data-next>Bekijk de uitslag</button>`
+    : `<div class="prog-bar" aria-hidden="true"><span style="width:${(done / total) * 100}%"></span></div>
+       <span class="prog-text">${v}/${trips.length} reizen · ${a}/${QUESTIONS.length} vragen</span>
+       <button class="btn small" type="button" data-next>${done ? "Verder" : "Begin met stemmen"}</button>`;
+}
+const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+$("#progress").addEventListener("click", (e) => {
+  if (e.target.closest("[data-pickname]")) openGate();
+  if (e.target.closest("[data-next]")) nextTarget()?.scrollIntoView({ behavior: smooth(), block: "start" });
+});
+
+/* navigatie: actieve sectie oplichten, "Toevoegen" klapt formulier open */
+const navLinks = [...document.querySelectorAll(".topnav a, .tabbar a")];
+const setActive = (id) => navLinks.forEach((l) => l.classList.toggle("active", l.getAttribute("href") === "#" + id));
+if ("IntersectionObserver" in window) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((en) => { if (en.isIntersecting) setActive(en.target.id); });
+  }, { rootMargin: "-35% 0px -60% 0px" });
+  ["opties", "vragen", "uitslag", "toevoegen"].forEach((id) => io.observe(document.getElementById(id)));
+}
+document.addEventListener("click", (e) => {
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  const id = a.getAttribute("href").slice(1); const target = document.getElementById(id); if (!target) return;
+  e.preventDefault();
+  if (id === "toevoegen") $("#add-box").open = true;
+  if (target.closest("#out-box")) $("#out-box").open = true;
+  target.scrollIntoView({ behavior: smooth(), block: "start" });
+  if (navLinks.includes(a)) setActive(id);
+});
 
 function openGate(mode = "pick", name = "", err = "") {
   gateState = { mode, name, err };
@@ -172,7 +223,11 @@ function vote(optId, choice) {
   guarded("v:" + optId, async () => {
     const ref = fs.doc(fs.db, "votes", optId + "__" + mySlug);
     if (cur && cur.choice === choice) await fs.deleteDoc(ref);
-    else await fs.setDoc(ref, { option: optId, name: me, slug: mySlug, choice, note: cur?.note || "", at: Date.now() });
+    else {
+      await fs.setDoc(ref, { option: optId, name: me, slug: mySlug, choice, note: cur?.note || "", at: Date.now() });
+      const left = allOptions().filter((o) => o.status !== "afgevallen" && !myVote(o.id)).length;
+      toast(left ? `Opgeslagen · nog ${left} ${left === 1 ? "reis" : "reizen"} te gaan` : "Alle reizen gestemd! Nu nog de vragen.");
+    }
   });
 }
 function saveNote(optId, note) {
@@ -212,18 +267,20 @@ function renderNotice() {
 function renderStand() {
   const rows = ranked();
   const topId = rows.find((r) => r.o.status !== "afgevallen" && r.score > 0)?.o.id;
-  $("#stand-body").innerHTML = `<div class="table-box"><table><thead><tr><th></th><th>Optie</th><th>Prijs pp</th><th>Stemmen</th><th>Punten</th></tr></thead><tbody>${
-    rows.map((r, i) => {
-      const tot = r.c.ja + r.c.misschien + r.c.nee || 1;
-      const out = r.o.status === "afgevallen";
-      return `<tr class="${r.o.id === topId ? "lead-row" : ""} ${out ? "out" : ""}">
-        <td class="rank">${out ? "–" : i + 1}</td>
-        <td><a href="#opt-${esc(r.o.id)}" style="color:inherit;font-weight:700">${esc(r.o.title)}</a><div class="counts">${esc(r.o.dates)}${out ? " · valt af" : ""}</div></td>
-        <td class="num">${r.o.pricePP ? euro(r.o.pricePP) : "?"}</td>
-        <td><div class="bar" aria-hidden="true"><span class="b-ja" style="width:${(r.c.ja / tot) * 100}%"></span><span class="b-mb" style="width:${(r.c.misschien / tot) * 100}%"></span><span class="b-nee" style="width:${(r.c.nee / tot) * 100}%"></span></div>
-            <div class="counts">${r.c.ja} ja · ${r.c.misschien} misschien · ${r.c.nee} nee</div></td>
-        <td class="num" style="font-weight:700">${r.score > 0 ? "+" : ""}${r.score}</td></tr>`;
-    }).join("")}</tbody></table></div>`;
+  let n = 0;
+  $("#stand-body").innerHTML = `<ol class="standings">${rows.map((r) => {
+    const tot = r.c.ja + r.c.misschien + r.c.nee || 1;
+    const out = r.o.status === "afgevallen";
+    if (!out) n++;
+    return `<li class="st-row ${r.o.id === topId ? "lead-row" : ""} ${out ? "out" : ""}">
+      <span class="rank">${out ? "–" : n}</span>
+      <div class="st-main"><a class="st-title" href="#opt-${esc(r.o.id)}">${esc(r.o.title)}</a>
+        <div class="st-meta">${esc(r.o.dates)} · ${r.o.pricePP ? euro(r.o.pricePP) : "?"} pp${out ? " · valt af" : ""}</div></div>
+      <span class="st-score" aria-label="${r.score} punten">${r.score > 0 ? "+" : ""}${r.score}</span>
+      <div class="bar" aria-hidden="true"><span class="b-ja" style="width:${(r.c.ja / tot) * 100}%"></span><span class="b-mb" style="width:${(r.c.misschien / tot) * 100}%"></span><span class="b-nee" style="width:${(r.c.nee / tot) * 100}%"></span></div>
+      <div class="counts">${r.c.ja} ja · ${r.c.misschien} misschien · ${r.c.nee} nee</div>
+    </li>`;
+  }).join("")}</ol>`;
   if (!S.loaded) { $("#pending").innerHTML = ""; return; }
   const openIds = allOptions().filter((o) => o.status !== "afgevallen").map((o) => o.id);
   const voted = new Set(S.votes.filter((v) => openIds.includes(v.option)).map((v) => slug(v.name)));
@@ -267,22 +324,25 @@ function passHTML(o) {
 }
 const sigs = {};
 function renderPasses() {
-  const box = $("#passes");
+  const box = $("#passes"), boxOut = $("#passes-out");
   box.querySelector(".empty")?.remove();
   const order = [...allOptions()].sort((a, b) => ((a.status === "afgevallen") - (b.status === "afgevallen")) || (a.order || 0) - (b.order || 0));
   const ids = new Set(order.map((o) => o.id));
-  box.querySelectorAll(".pass").forEach((el) => { if (!ids.has(el.dataset.id)) { el.remove(); delete sigs[el.dataset.id]; } });
+  $("#opties").querySelectorAll(".pass").forEach((el) => { if (!ids.has(el.dataset.id)) { el.remove(); delete sigs[el.dataset.id]; } });
+  const nOut = order.filter((o) => o.status === "afgevallen").length;
+  $("#out-box").hidden = !nOut;
+  $("#out-summary").textContent = nOut === 1 ? "1 afgevallen optie bekijken" : `${nOut} afgevallen opties bekijken`;
   const topId = ranked().find((x) => x.o.status !== "afgevallen" && x.score > 0)?.o.id;
   order.forEach((o) => {
     const sig = JSON.stringify(o) + "|" + (me || "");
-    let el = box.querySelector(`.pass[data-id="${CSS.escape(o.id)}"]`);
+    let el = $("#opties").querySelector(`.pass[data-id="${CSS.escape(o.id)}"]`);
     if (!el || sigs[o.id] !== sig) {
       const tmp = document.createElement("div"); tmp.innerHTML = passHTML(o); const nel = tmp.firstElementChild;
       if (el) { const draft = el.querySelector("[data-note]").value; el.replaceWith(nel); nel.querySelector("[data-note]").value = draft; }
       el = nel; sigs[o.id] = sig;
     }
-    box.appendChild(el);
     const out = o.status === "afgevallen";
+    (out ? boxOut : box).appendChild(el);
     el.querySelector("[data-tags]").innerHTML = (o.id === topId ? `<span class="tag lead">Ligt voor</span>` : "") + (out ? `<span class="tag out">Valt af</span>` : "") + (o.length ? `<span class="tag">${esc(o.length)}</span>` : "");
     const mine = myVote(o.id); const isBusy = busy.has("v:" + o.id);
     el.querySelectorAll(".vb").forEach((b) => { b.setAttribute("aria-pressed", String(mine?.choice === b.dataset.choice)); b.disabled = isBusy; });
@@ -297,7 +357,7 @@ function renderPasses() {
     el.querySelector("[data-notes]").innerHTML = t.vs.filter((v) => v.note).map((v) => `<p><b>${esc(v.name)}:</b> ${esc(v.note)}</p>`).join("");
   });
 }
-$("#passes").addEventListener("click", (e) => {
+$("#opties").addEventListener("click", (e) => {
   const card = e.target.closest(".pass"); if (!card) return; const id = card.dataset.id;
   const vb = e.target.closest(".vb"); if (vb) { vote(id, vb.dataset.choice); return; }
   if (e.target.closest("[data-save]")) { const inp = card.querySelector("[data-note]"); delete inp.dataset.dirty; saveNote(id, inp.value); return; }
@@ -305,8 +365,8 @@ $("#passes").addEventListener("click", (e) => {
   if (e.target.closest("[data-del-no]")) { card.querySelector("[data-confirm]").hidden = true; return; }
   if (e.target.closest("[data-del-yes]")) guarded("d:" + id, async () => { await fs.deleteDoc(fs.doc(fs.db, "options", id)); toast("Optie verwijderd"); });
 });
-$("#passes").addEventListener("input", (e) => { if (e.target.matches("[data-note]")) e.target.dataset.dirty = "1"; });
-$("#passes").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("[data-note]")) { e.preventDefault(); e.target.closest(".note-row").querySelector("[data-save]").click(); } });
+$("#opties").addEventListener("input", (e) => { if (e.target.matches("[data-note]")) e.target.dataset.dirty = "1"; });
+$("#opties").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("[data-note]")) { e.preventDefault(); e.target.closest(".note-row").querySelector("[data-save]").click(); } });
 
 /* ---------- vragen ---------- */
 function renderQs() {

@@ -176,3 +176,66 @@ form.add .actions{grid-column:1/-1;display:flex;gap:12px;align-items:center;flex
 .gate-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .gate-err{color:var(--no);font-weight:600;font-size:14px;min-height:20px}
 .lock{font-size:13px;color:var(--muted)}
+
+/* ===== navigatie & voortgang ===== */
+.who{flex-direction:column;align-items:stretch;gap:10px}
+.who-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:32px}
+.topnav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+.topnav a{text-decoration:none;font-size:14px;font-weight:600;color:var(--muted);padding:6px 12px;border-radius:999px}
+.topnav a:hover{background:var(--sea-soft);color:var(--sea)}
+.topnav a.active{background:var(--sea-soft);color:var(--sea)}
+.progress{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.prog-bar{flex:1 1 120px;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.prog-bar span{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .4s ease}
+.prog-text{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.prog-text.ok{color:var(--ok)}
+.progress .btn{margin-left:auto}
+.lead b{color:var(--ink)}
+.step{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--sea);color:var(--paper);font-size:14px;margin-right:10px;vertical-align:3px}
+section,.pass,.q{scroll-margin-top:150px}
+.vb{min-height:50px;font-size:16px}
+a.btn{text-decoration:none;display:inline-block}
+
+/* afgevallen opties & toevoegen inklapbaar */
+.out-box > summary,.add-box > summary{cursor:pointer;list-style:none}
+.out-box > summary::-webkit-details-marker,.add-box > summary::-webkit-details-marker{display:none}
+.out-box > summary{color:var(--muted);font-weight:600;padding:10px 0;text-decoration:underline;text-underline-offset:3px}
+.out-box[open] > summary{margin-bottom:12px}
+.add-box{display:flex;flex-direction:column;gap:14px}
+.add-box > summary{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;padding:16px 18px;border:1.5px dashed var(--line);border-radius:12px;background:var(--paper)}
+.add-box > summary:hover{border-color:var(--sea);color:var(--sea)}
+.add-box .plus{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--sea-soft);color:var(--sea);font-size:20px;line-height:1}
+.add-box[open] > summary{border-style:solid}
+
+/* uitslag als lijst */
+.standings{list-style:none;margin:0;padding:0;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+.st-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 14px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.st-row:last-child{border-bottom:0}
+.st-row.out{opacity:.55}
+.st-row .rank{font-family:var(--display);font-size:18px;width:auto}
+.st-row.lead-row{background:var(--sun-soft)}
+.st-row.lead-row .rank{color:var(--sun)}
+.st-title{font-weight:700;color:inherit;text-decoration:none}
+.st-title:hover{text-decoration:underline}
+.st-meta{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.st-score{font-family:var(--display);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.st-row .bar,.st-row .counts{grid-column:2/4}
+.st-row .bar{margin-top:6px;min-width:0}
+
+/* tabbalk onderin (telefoon) */
+.tabbar{display:none}
+.tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:720px){
+  .wrap{padding-block:16px calc(110px + env(safe-area-inset-bottom,0px));gap:28px}
+  h1{font-size:30px}
+  .lead{font-size:15px}
+  .who .topnav{display:none}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--paper);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -6px 20px -14px rgba(15,34,54,.45)}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 10px;font-size:12px;font-weight:700;color:var(--muted);text-decoration:none;-webkit-tap-highlight-color:transparent}
+  .tabbar a.active{color:var(--sea)}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  section,.pass,.q{scroll-margin-top:130px}
+  .pass-main,.pass-stub{padding:16px}
+  .sec-head .eyebrow{width:100%}
+  .progress .btn{margin-left:0;flex:1 1 100%}
+}
