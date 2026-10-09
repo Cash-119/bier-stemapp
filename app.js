@@ -14,7 +14,7 @@ const S = { extra: [], votes: [], answers: [], claims: [], loaded: false, claims
 const busy = new Set();
 let fs = null; // Firestore-functies + db, gevuld zodra Firebase klaar is
 
-const allOptions = () => [...BASE_OPTIONS, ...S.extra];
+const allOptions = () => [...BASE_OPTIONS, ...S.extra.filter((o) => !/^test-/.test(o.bySlug || ""))];
 
 function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
@@ -26,12 +26,15 @@ function toast(msg) {
    secrets/<slug> {pin}        onleesbaar, alleen de regels kijken erin
    logins/<uid>   {slug, pin}  inlogpoging op een nieuw apparaat
 */
+const TEST = /^test-/; // proefnamen: onzichtbaar, alleen bruikbaar met kos-test=1
+const testMode = () => { try { return localStorage.getItem("kos-test") === "1"; } catch (e) { return false; } };
+const visible = (s) => !TEST.test(s || "");
 let me = null;      // naam van dit apparaat, afgeleid uit claims
 let mySlug = null;
 let gateState = { mode: "pick", name: "", err: "" };
 
 function deriveMe() {
-  const mine = S.uid ? S.claims.filter((c) => c.uid === S.uid) : [];
+  const mine = S.uid ? S.claims.filter((c) => c.uid === S.uid && (visible(c.id) || testMode())) : [];
   let pick = mine[0] || null;
   try { const pref = localStorage.getItem("kos-naam"); const hit = mine.find((c) => c.name === pref); if (hit) pick = hit; } catch (e) {}
   me = pick ? pick.name : null;
@@ -64,7 +67,7 @@ function renderGate() {
   }
   if (mode === "pick") {
     const taken = new Set(S.claims.map((c) => c.id));
-    const names = [...new Map([...MEMBERS, ...S.claims.map((c) => c.name)].map((n) => [slug(n), n])).values()];
+    const names = [...new Map([...MEMBERS, ...S.claims.filter((c) => visible(c.id)).map((c) => c.name)].map((n) => [slug(n), n])).values()];
     card.innerHTML = `<h2 id="gate-title">Wie ben jij?</h2>
       <p class="muted">Kies je naam en bedenk een pincode van 4 cijfers. Je naam blijft daarna vastgezet op dit apparaat, zodat niemand anders onder jouw naam kan stemmen.</p>
       <div class="name-chips">${names.map((n) => `<button type="button" data-name="${esc(n)}" class="${taken.has(slug(n)) ? "taken" : ""}">${esc(n)}</button>`).join("")}</div>
@@ -143,7 +146,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeGate(
 const myVote = (optId) => (mySlug ? S.votes.find((v) => v.option === optId && (v.slug || slug(v.name)) === mySlug) || null : null);
 const myAnswer = (qid) => (mySlug ? S.answers.find((a) => a.question === qid && (a.slug || slug(a.name)) === mySlug) || null : null);
 function tally(optId) {
-  const vs = S.votes.filter((v) => v.option === optId);
+  const vs = S.votes.filter((v) => v.option === optId && visible(v.slug));
   const c = { ja: 0, misschien: 0, nee: 0 }; vs.forEach((v) => { if (c[v.choice] != null) c[v.choice]++; });
   return { c, vs, score: c.ja * POINTS.ja + c.misschien * POINTS.misschien + c.nee * POINTS.nee };
 }
@@ -224,7 +227,7 @@ function renderStand() {
   if (!S.loaded) { $("#pending").innerHTML = ""; return; }
   const openIds = allOptions().filter((o) => o.status !== "afgevallen").map((o) => o.id);
   const voted = new Set(S.votes.filter((v) => openIds.includes(v.option)).map((v) => slug(v.name)));
-  const people = [...new Map([...MEMBERS, ...S.votes.map((v) => v.name), ...S.answers.map((a) => a.name)].map((n) => [slug(n), n])).values()];
+  const people = [...new Map([...MEMBERS, ...S.claims.filter((c) => visible(c.id)).map((c) => c.name)].map((n) => [slug(n), n])).values()];
   const missing = people.filter((n) => !voted.has(slug(n)));
   $("#pending").innerHTML = missing.length
     ? `<span class="muted">Nog niet gestemd:</span> ${missing.map((n) => `<span class="chip">${esc(n)}</span>`).join("")}`
@@ -318,7 +321,7 @@ function renderQs() {
   QUESTIONS.forEach((q) => {
     const el = box.querySelector(`.q[data-id="${q.id}"]`);
     const mine = myAnswer(q.id);
-    const ans = S.answers.filter((a) => a.question === q.id);
+    const ans = S.answers.filter((a) => a.question === q.id && visible(a.slug));
     if (q.kind === "text") {
       const inp = el.querySelector("[data-qtext]");
       if (document.activeElement !== inp && !inp.dataset.dirty) inp.value = mine?.value || "";
