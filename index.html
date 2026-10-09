@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stembureau Kos</title>
+<meta name="description" content="Alle opties voor onze Kos-vakantie op een rij. Stem mee!">
+<meta property="og:title" content="Stembureau Kos">
+<meta property="og:description" content="Alle opties voor onze Kos-vakantie op een rij. Stem mee!">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1458A6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231458A6'/%3E%3Ccircle cx='44' cy='20' r='9' fill='%23F2C14E'/%3E%3Cpath d='M0 44c10-6 20-6 32 0s22 6 32 0v20H0z' fill='%23DDE8F5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="route" aria-label="Amsterdam of Rotterdam naar Kos"><span>AMS / RTM</span><span class="dash"></span><span>KGS</span><span class="muted" style="font-weight:500">· Kos, Griekenland</span></div>
+    <h1>Stembureau Kos</h1>
+    <p class="lead">Alle opties uit de groepsapp op een rij, met prijzen per persoon. Stem per optie ja, misschien of nee, en beantwoord de open vragen. Iedereen ziet live wie wat heeft gekozen.</p>
+  </header>
+
+  <div class="who" id="who">
+    <span id="who-text">Je hebt nog geen naam gekozen.</span>
+    <button class="linkbtn" id="who-change" type="button">Naam kiezen</button>
+    <nav aria-label="Secties"><a href="#stand">Stand</a><a href="#opties">Opties</a><a href="#vragen">Vragen</a><a href="#toevoegen">Optie toevoegen</a></nav>
+  </div>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <section id="stand">
+    <div class="sec-head"><h2>Tussenstand</h2><span class="eyebrow">Ja +2 · misschien +1 · nee −2</span></div>
+    <div id="stand-body"><div class="empty">De opties worden geladen. Zodra ze er zijn zie je hier welke reis voorligt.</div></div>
+    <p class="pending" id="pending"></p>
+  </section>
+
+  <section id="opties">
+    <div class="sec-head"><h2>De opties</h2><span class="eyebrow">Prijzen per persoon, vlucht + huis</span></div>
+    <div class="passes" id="passes"><div class="empty">Nog geen opties geladen.</div></div>
+  </section>
+
+  <section id="vragen">
+    <div class="sec-head"><h2>Open vragen</h2><span class="eyebrow">Hier liep de chat op vast</span></div>
+    <div class="qs" id="qs"></div>
+  </section>
+
+  <section id="toevoegen">
+    <div class="sec-head"><h2>Optie toevoegen</h2><span class="eyebrow">Nieuw huis of andere data gevonden?</span></div>
+    <form class="add" id="add-form" autocomplete="off">
+      <label>Naam van de optie<input type="text" id="f-title" required maxlength="60" placeholder="Bijv. Appartement ★4,79"></label>
+      <label>Data<input type="text" id="f-dates" required maxlength="40" placeholder="Bijv. 22 – 28 juli"></label>
+      <label>Duur<input type="text" id="f-length" maxlength="30" placeholder="Bijv. 6 nachten"></label>
+      <label>Prijs per persoon (€)<input type="number" id="f-price" min="0" max="5000" step="1" placeholder="Bijv. 820"></label>
+      <label class="full">Vlucht<input type="text" id="f-flight" maxlength="160" placeholder="Maatschappij, vanaf welk vliegveld, tijden, bagage"></label>
+      <label class="full">Huis<input type="text" id="f-house" maxlength="160" placeholder="Type, sterren, slaapkamers, bedden, ligging"></label>
+      <label class="full">Link (Airbnb, Transavia)<input type="text" id="f-link" maxlength="400" placeholder="https://…"></label>
+      <label>Voordelen (één per regel)<textarea id="f-pros" maxlength="800"></textarea></label>
+      <label>Nadelen (één per regel)<textarea id="f-cons" maxlength="800"></textarea></label>
+      <div class="actions"><button class="btn" type="submit" id="f-submit">Optie toevoegen</button><span class="muted" id="f-msg"></span></div>
+    </form>
+  </section>
+</div>
+
+<div class="gate" id="gate" hidden>
+  <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <h2 id="gate-title">Wie ben jij?</h2>
+    <p class="muted">Je naam komt bij je stemmen te staan. Deze browser onthoudt hem, dus je hoeft hem maar één keer te kiezen.</p>
+    <div class="name-chips" id="name-chips"></div>
+    <form id="gate-form"><input type="text" id="gate-input" maxlength="24" placeholder="Andere naam" aria-label="Andere naam"><button class="btn" type="submit">Ga</button></form>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

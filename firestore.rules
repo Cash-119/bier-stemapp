@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    match /votes/{id} {
+      allow read: if true;
+      allow delete: if true;
+      allow create, update: if request.resource.data.choice in ['ja','misschien','nee']
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.note is string && request.resource.data.note.size() <= 280;
+    }
+    match /answers/{id} {
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.value is string && request.resource.data.value.size() <= 200;
+    }
+    match /options/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.title is string && request.resource.data.title.size() <= 60;
+      allow delete: if true;
+    }
+  }
+}
