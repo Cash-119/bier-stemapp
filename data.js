@@ -4,6 +4,8 @@
 
 export const MEMBERS = ["Cas", "Hidde", "Lucas", "Shane", "Maurits", "Timo"];
 export const CHECKED_ON = "9 okt";
+// Apparaten die geblokkeerd zijn (alles wat ze schreven wordt verborgen).
+export const BLOCKED_UIDS = ["pFQSbtE8zSbFkgANLTO5j2Jv6fZ2"];
 
 const TRANSAVIA = "https://www.transavia.com/home/nl-nl";
 const img = (path) => `https://a0.muscache.com/im/pictures/${path}?im_w=720`;

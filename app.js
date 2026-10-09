@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./config.js";
-import { MEMBERS, BASE_OPTIONS, QUESTIONS, CHECKED_ON } from "./data.js";
+import { MEMBERS, BASE_OPTIONS, QUESTIONS, CHECKED_ON, BLOCKED_UIDS } from "./data.js";
 
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 const CHOICES = [["ja", "Ja"], ["misschien", "Misschien"], ["nee", "Nee"]];
@@ -116,11 +116,10 @@ function renderGate() {
   }
   if (mode === "pick") {
     const taken = new Set(S.claims.map((c) => c.id));
-    const names = [...new Map([...MEMBERS, ...S.claims.filter((c) => visible(c.id)).map((c) => c.name)].map((n) => [slug(n), n])).values()];
+    const names = MEMBERS;
     card.innerHTML = `<h2 id="gate-title">Wie ben jij?</h2>
       <p class="muted">Kies je naam om mee te stemmen. Je naam blijft daarna op dit apparaat staan.</p>
       <div class="name-chips">${names.map((n) => `<button type="button" data-name="${esc(n)}" class="${taken.has(slug(n)) ? "taken" : ""}">${esc(n)}</button>`).join("")}</div>
-      <form data-other class="gate-actions"><input type="text" id="gate-input" maxlength="24" placeholder="Andere naam" aria-label="Andere naam" style="flex:1;min-width:0"><button class="btn" type="submit">Verder</button></form>
       <p class="gate-err" role="alert">${esc(err)}</p>
       <div class="gate-actions"><button class="linkbtn" type="button" data-close>Nee, ik kijk alleen even</button></div>`;
     return;
@@ -437,10 +436,22 @@ renderAll();
     const fail = (err) => { console.error(err); S.error = err; renderNotice(); };
     let pending = 4;
     const ready = () => { if (--pending === 0) S.loaded = true; };
+    const RAW = { claims: [], votes: [], answers: [], extra: [] };
+    // Alles van geblokkeerde apparaten weg, en alleen bijdragen van ná het kiezen van de naam
+    // (zo verschijnt niks van de vorige eigenaar van een overgenomen naam).
+    const refilter = () => {
+      S.claims = RAW.claims.filter((c) => !BLOCKED_UIDS.includes(c.uid));
+      const since = new Map(S.claims.map((c) => [c.id, c.at || 0]));
+      const ok = (s, t) => since.has(s) && (t || 0) >= since.get(s);
+      S.votes = RAW.votes.filter((v) => ok(v.slug, v.at));
+      S.answers = RAW.answers.filter((a) => ok(a.slug, a.at));
+      S.extra = RAW.extra.filter((o) => ok(o.bySlug, o.order));
+    };
     const sub = (name, key, after) => {
       let first = true;
       f.onSnapshot(f.collection(fs.db, name), (snap) => {
-        S[key] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        RAW[key] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        refilter();
         if (S.error) { S.error = null; renderNotice(); }
         if (first) { first = false; ready(); }
         if (after) after();
