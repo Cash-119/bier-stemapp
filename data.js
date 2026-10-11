@@ -1,7 +1,8 @@
 // Huizen, periodes en vragen voor de Bier-StemApp.
 // Prijzen, beschikbaarheid en vluchten gecheckt op 9 oktober 2026 (Airbnb + Transavia + Sunweb, 6 personen).
+// Alexandra Beach (TUI) gecheckt op 11 oktober 2026.
 // Reizen die vrienden zelf toevoegen staan in Firebase (collectie "options").
-import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA, PHOTOS_ANGELA, PHOTOS_ANASTASIA } from "./photos.js";
+import { PHOTOS_LUCAS, PHOTOS_SOFIE, PHOTOS_BESA, PHOTOS_VILLA, PHOTOS_ANGELA, PHOTOS_ANASTASIA, PHOTOS_ALEXANDRA } from "./photos.js";
 
 export const MEMBERS = ["Cas", "Hidde", "Lucas", "Shane", "Maurits", "Timo"];
 export const CHECKED_ON = "9 okt";
@@ -125,6 +126,26 @@ export const HOUSES = [
     ],
     pros: ["Netter en luxer: gerenoveerd, 4 sterren, betere reviews (8,4)", "Zwembad, airco inbegrepen en gratis fietsen", "Supermarkt om de hoek, 24 uur receptie"],
     cons: ["±€130–225 p.p. duurder dan Angela", "4 man moeten een bed delen, 1 badkamer", "Iets verder van strand en centrum (±800 m–1 km)"],
+  },
+  {
+    id: "huis-alexandra", order: 7, by: "Cas", package: true, packageFlight: true,
+    title: "Pakketreis aan het strand, eigen bed", houseName: "Alexandra Beach (TUI)",
+    tui: "https://www.tui.nl/alexandra-beach-50917329/", photos: PHOTOS_ALEXANDRA,
+    house: "Hotel- en appartementencomplex in Psalidi (officieel 4 sterren, TUI geeft 3) · TUI-reviews 8,8/10 (203) · 3-kamerappartement voor 6 · 1 badkamer · strand 200 m · centrum Kos-stad 1,7 km",
+    pool: true, poolNote: "groot buitenzwembad in een verzorgde tuin, met ligbedden, parasols en een snackbar (gedeeld met het complex)",
+    // TUI-prijs p.p. inclusief Transavia-vlucht, alleen logies, 6 personen in 1 appartement, incl. toeristenbelasting.
+    packagePP: { p1: 800, p2: 844, p3: 890 },
+    checks: [
+      { s: "ok", t: "Vlucht + appartement in één boeking via TUI. Het zijn precies dezelfde Transavia-vluchten als bij de Airbnb-huizen (26 juli – 2 aug vanaf Rotterdam). Op elke datum nog 2 appartementen voor 6 vrij." },
+      { s: "ok", t: "Slapen: 2 slaapkamers met elk 2 eenpersoonsbedden, plus 2 slaapbanken in de woonkamer. Iedereen een eigen slaapplek." },
+      { s: "info", t: "Ontbijt kan erbij voor €16 p.p. per nacht. Airco zit bij de prijs." },
+      { s: "let", t: "Alleen handbagage. Een koffer van 20 kg kost €112 p.p. extra." },
+      { s: "let", t: "Transfer zit er niet bij: TUI-bus €24 p.p. retour, privétaxi €73 p.p. retour (of zelf een taxi, ±30 min)." },
+      { s: "info", t: "In de prijs zit nu een TUI-actiekorting van €40–60 p.p. die bijna afloopt. Daarna is het waarschijnlijk iets duurder." },
+      { s: "let", t: "Maar 1 badkamer voor 6 man. Volgens reviews zijn de bedden hard en de douches klein." },
+    ],
+    pros: ["Iedereen een eigen slaapplek", "Strand op 200 m en een groot zwembad", "Beste reviews van de pakketreizen (8,8)", "Volgens TUI vieren vooral jongeren hier hun vakantie in het hoogseizoen"],
+    cons: ["Buiten de stad: 1,7 km naar het centrum (fiets of taxi)", "1 badkamer voor 6 man", "Koffer en transfer kosten extra"],
   },
 ];
 

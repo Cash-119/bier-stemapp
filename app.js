@@ -42,18 +42,26 @@ function ppFor(h, P) {
   const t = h.prices[P.id];
   return t ? Math.round(t / GROUP_SIZE) + P.flightPP : null;
 }
+// Waar een huis/pakket vandaan komt en de link ernaartoe.
+const provOf = (o) => (o.tui ? "TUI" : o.sunweb ? "Sunweb" : "Airbnb");
+const extOf = (o) =>
+  o.airbnb && /^https:\/\/www\.airbnb\./.test(o.airbnb) ? o.airbnb
+  : o.sunweb && /^https:\/\/www\.sunweb\.nl\//.test(o.sunweb) ? o.sunweb
+  : o.tui && /^https:\/\/www\.tui\.nl\//.test(o.tui) ? o.tui : "";
 function viewOf(h) {
   const P = curPeriod();
   if (h.package) {
     const pp = ppFor(h, P);
+    const prov = provOf(h);
     return {
       ...h, isHouse: true, seed: true, status: "open",
-      dates: P.label, length: `${P.nights} nachten`, origin: "AMS",
-      flight: "Vlucht vanaf Schiphol zit in de Sunweb-prijs · maatschappij en tijden zie je pas bij het boeken",
+      dates: P.label, length: `${P.nights} nachten`,
+      origin: h.packageFlight ? P.origin : "AMS",
+      flight: h.packageFlight ? `${P.flight} · zit in de ${prov}-prijs` : `Vlucht vanaf Schiphol zit in de ${prov}-prijs · maatschappij en tijden zie je pas bij het boeken`,
       unavailable: !pp, pricePP: pp || 0,
-      priceNote: pp ? "Sunweb pakketreis: vlucht + appartement" : "Niet vrij op deze data",
+      priceNote: pp ? `${prov} pakketreis: vlucht + appartement` : "Niet vrij op deze data",
       periodNote: P.note,
-      checks: [pp ? { s: "ok", t: `Op Sunweb te boeken voor ${P.label}: €${pp} p.p., vlucht inbegrepen.` } : { s: "nee", t: `Niet te boeken op ${P.label}.` }, ...h.checks],
+      checks: [pp ? { s: "ok", t: `Op ${prov} te boeken voor ${P.label}: €${pp} p.p., vlucht inbegrepen.` } : { s: "nee", t: `Niet te boeken op ${P.label}.` }, ...h.checks],
     };
   }
   const total = h.prices[P.id];
@@ -337,15 +345,15 @@ function passHTML(o, firstOf) {
   const li = (a) => (a || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li class='muted'>Nog niets genoemd</li>";
   const link = o.link && /^https:\/\//.test(o.link) ? `<dt>Link</dt><dd><a href="${esc(o.link)}" target="_blank" rel="noopener">${esc(o.linkLabel || "Bekijken")}</a></dd>` : "";
   const canDelete = !o.seed && o.bySlug && mySlug && o.bySlug === mySlug;
-  const airbnb = o.airbnb && /^https:\/\/www\.airbnb\./.test(o.airbnb) ? o.airbnb : o.sunweb && /^https:\/\/www\.sunweb\.nl\//.test(o.sunweb) ? o.sunweb : "";
-  const extLabel = o.sunweb ? "Bekijk op Sunweb" : "Bekijk op Airbnb";
+  const airbnb = extOf(o);
+  const extLabel = `Bekijk op ${provOf(o)}`;
   const ph = o.photos || [];
   const photos = sameAs && ph.length ? `<div class="same-house">
       <button type="button" class="ph-mini" data-gallery="0" aria-label="Bekijk de foto's"><img src="${esc(ph[0])}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>
       <div><b>Zelfde huis als <a href="#opt-${esc(sameAs.id)}">${esc(sameAs.title)}</a></b><br><button type="button" class="linkbtn" data-gallery="0">Bekijk alle ${ph.length} foto's</button></div>
     </div>` : ph.length ? `<div class="photos" role="list" aria-label="Foto's van ${esc(o.houseName || o.title)}">${ph.slice(0, 8).map((u, i) =>
       `<button type="button" role="listitem" class="ph" data-gallery="${i}"><img src="${esc(u)}" alt="Foto ${i + 1} van ${esc(o.houseName || o.title)}" loading="${i ? "lazy" : "eager"}" referrerpolicy="no-referrer"></button>`).join("")}${ph.length > 8 ? `<button type="button" class="ph more" data-gallery="8"><span>+${ph.length - 8}</span>meer foto's</button>` : ""}</div>
-      <div class="photo-row"><button type="button" class="btn ghost small" data-gallery="0">Bekijk alle ${ph.length} foto's</button><span class="photo-credit">Foto's van ${o.sunweb ? "Sunweb" : "Airbnb"}</span></div>` : "";
+      <div class="photo-row"><button type="button" class="btn ghost small" data-gallery="0">Bekijk alle ${ph.length} foto's</button><span class="photo-credit">Foto's van ${provOf(o)}</span></div>` : "";
   const ICON = { ok: "✓", let: "!", nee: "✕", info: "i" };
   const ck = (o.checks || []).filter((c) => !(sameAs && c.house));
   const checks = ck.length ? `<div class="checks"><div class="checks-head">Nagekeken op ${esc(CHECKED_ON)}</div><ul>${ck.map((c) =>
@@ -437,8 +445,8 @@ function openGallery(optId, start) {
   const g = $("#gallery");
   $("#gallery-title").textContent = `${o.houseName || o.title} · ${o.photos.length} foto's`;
   const link = $("#gallery-link");
-  const ext = o.airbnb || o.sunweb;
-  if (ext) { link.href = ext; link.textContent = o.sunweb ? "Op Sunweb" : "Op Airbnb"; link.hidden = false; } else link.hidden = true;
+  const ext = extOf(o);
+  if (ext) { link.href = ext; link.textContent = `Op ${provOf(o)}`; link.hidden = false; } else link.hidden = true;
   $("#gallery-grid").innerHTML = o.photos.map((u, i) => `<img src="${esc(u)}" alt="Foto ${i + 1} van ${o.photos.length}" loading="lazy" referrerpolicy="no-referrer" id="g-${i}">`).join("");
   g.hidden = false; document.body.style.overflow = "hidden";
   requestAnimationFrame(() => { const el = document.getElementById("g-" + start); if (el && start > 0) el.scrollIntoView({ block: "start" }); else $("#gallery-grid").scrollTop = 0; });
