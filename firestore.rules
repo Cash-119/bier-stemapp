@@ -49,6 +49,18 @@ service cloud.firestore {
       allow delete: if owns(resource.data.slug);
     }
 
+    // Kamerverdeling: één document per bed. Bezet is bezet: alleen de eigenaar kan het vrijgeven.
+    match /beds/{bed} {
+      allow read: if true;
+      allow create: if bed in ['k1a', 'k1b', 'k2a', 'k2b', 'wk1', 'wk2']
+        && owns(request.resource.data.slug)
+        && request.resource.data.keys().hasOnly(['name', 'slug', 'at'])
+        && request.resource.data.name == nameOf(request.resource.data.slug)
+        && request.resource.data.at is number;
+      allow update: if false;
+      allow delete: if owns(resource.data.slug);
+    }
+
     match /options/{id} {
       allow read: if true;
       allow create: if owns(request.resource.data.bySlug)

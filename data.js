@@ -149,6 +149,14 @@ export const HOUSES = [
   },
 ];
 
+// Het gekozen huis en de kamerverdeling van het appartement daar.
+export const DECIDED = "huis-alexandra";
+export const ROOMS = [
+  { id: "k1", name: "Slaapkamer 1", beds: [{ id: "k1a", label: "Bed 1", kind: "Eenpersoonsbed" }, { id: "k1b", label: "Bed 2", kind: "Eenpersoonsbed" }] },
+  { id: "k2", name: "Slaapkamer 2", beds: [{ id: "k2a", label: "Bed 1", kind: "Eenpersoonsbed" }, { id: "k2b", label: "Bed 2", kind: "Eenpersoonsbed" }] },
+  { id: "wk", name: "Woonkamer", note: "Hier slaap je pas als de rest ook naar bed gaat.", beds: [{ id: "wk1", label: "Slaapbank 1", kind: "Tweepersoons slaapbank" }, { id: "wk2", label: "Slaapbank 2", kind: "Tweepersoons slaapbank" }] },
+];
+
 export const QUESTIONS = [
   {
     id: "data", order: 1, kind: "choice",

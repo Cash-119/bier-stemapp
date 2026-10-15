@@ -1,5 +1,5 @@
 import { firebaseConfig } from "./config.js";
-import { MEMBERS, HOUSES, PERIODS, GROUP_SIZE, QUESTIONS, CHECKED_ON, BLOCKED_UIDS, GENERAL } from "./data.js";
+import { MEMBERS, HOUSES, PERIODS, GROUP_SIZE, QUESTIONS, CHECKED_ON, BLOCKED_UIDS, GENERAL, ROOMS } from "./data.js";
 
 const FB = "https://www.gstatic.com/firebasejs/10.12.2/";
 const CHOICES = [["ja", "Ja"], ["misschien", "Misschien"], ["nee", "Nee"]];
@@ -10,7 +10,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const slug = (n) => String(n).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "anoniem";
 const euro = (n) => "€" + Number(n).toLocaleString("nl-NL");
 
-const S = { extra: [], votes: [], answers: [], claims: [], loaded: false, claimsLoaded: false, error: null, uid: null, authError: null };
+const S = { extra: [], votes: [], answers: [], claims: [], beds: [], bedsLoaded: false, loaded: false, claimsLoaded: false, error: null, uid: null, authError: null };
 const busy = new Set();
 let fs = null; // Firestore-functies + db, gevuld zodra Firebase klaar is
 
@@ -153,7 +153,7 @@ if ("IntersectionObserver" in window) {
   const io = new IntersectionObserver((entries) => {
     entries.forEach((en) => { if (en.isIntersecting) setActive(en.target.id); });
   }, { rootMargin: "-35% 0px -60% 0px" });
-  ["opties", "vragen", "uitslag", "toevoegen"].forEach((id) => io.observe(document.getElementById(id)));
+  ["opties", "vragen", "uitslag", "kamers", "toevoegen"].forEach((id) => io.observe(document.getElementById(id)));
 }
 document.addEventListener("click", (e) => {
   const a = e.target.closest('a[href^="#"]'); if (!a) return;
@@ -298,6 +298,54 @@ function answer(qid, value) {
     if (q.kind === "text") toast("Antwoord opgeslagen");
   });
 }
+
+/* ---------- kamerverdeling ---------- */
+const ALL_BEDS = ROOMS.flatMap((r) => r.beds.map((b) => ({ ...b, room: r.name })));
+const bedOf = (id) => S.beds.find((b) => b.id === id);
+const myBeds = () => (mySlug ? S.beds.filter((b) => b.slug === mySlug) : []);
+function pickBed(bedId) {
+  if (!me) { openGate(); return; }
+  const cur = bedOf(bedId);
+  if (cur && cur.slug !== mySlug) { toast(`Dit bed is al van ${cur.name}`); return; }
+  guarded("bed", async () => {
+    const batch = fs.writeBatch(fs.db);
+    myBeds().forEach((b) => batch.delete(fs.doc(fs.db, "beds", b.id)));
+    if (!cur) batch.set(fs.doc(fs.db, "beds", bedId), { name: me, slug: mySlug, at: Date.now() });
+    await batch.commit();
+    const B = ALL_BEDS.find((b) => b.id === bedId);
+    toast(cur ? "Bed vrijgegeven" : `Je slaapt in ${B.room.toLowerCase()}, ${B.label.toLowerCase()}`);
+  });
+}
+function renderRooms() {
+  const el = $("#rooms");
+  if (S.bedsError) { el.innerHTML = `<div class="empty">De kamerverdeling staat nog niet aan. Probeer het later nog eens.</div>`; return; }
+  if (!S.bedsLoaded) { el.innerHTML = `<div class="empty">${S.error ? "De kamers konden niet geladen worden." : "De kamers worden geladen…"}</div>`; return; }
+  const taken = new Set(S.beds.map((b) => b.name));
+  const left = MEMBERS.filter((m) => !taken.has(m));
+  const busyBed = busy.has("bed");
+  el.innerHTML = `<div class="rooms">${ROOMS.map((r) => {
+    const n = r.beds.filter((b) => bedOf(b.id)).length;
+    return `<div class="room">
+      <div class="room-head"><h3>${esc(r.name)}</h3><span class="mono muted">${n}/${r.beds.length}</span></div>
+      ${r.note ? `<p class="room-note">${esc(r.note)}</p>` : ""}
+      <div class="beds">${r.beds.map((b) => {
+        const who = bedOf(b.id), mine = who && who.slug === mySlug;
+        const cls = mine ? "bed mine" : who ? "bed taken" : "bed free";
+        const label = mine ? `${b.label}, jouw bed. Tik om vrij te geven` : who ? `${b.label}, bezet door ${who.name}` : `${b.label}, vrij. Tik om te kiezen`;
+        return `<button type="button" class="${cls}" data-bed="${b.id}" aria-label="${esc(label)}"${busyBed ? " disabled" : ""}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5M7 11.5a1.5 1.5 0 1 0 0-.01"/></svg>
+          <span class="bed-kind">${esc(b.label)} · ${esc(b.kind)}</span>
+          <span class="bed-who">${who ? esc(who.name) + (mine ? " (jij)" : "") : "Vrij"}</span>
+        </button>`;
+      }).join("")}</div>
+    </div>`;
+  }).join("")}</div>
+  <div class="rooms-foot">
+    <p>${left.length ? `<b>Nog geen bed:</b> ${left.map(esc).join(", ")}` : "<b>Iedereen heeft een bed.</b> Top!"}</p>
+    <p class="muted">1 badkamer voor 6 man. TUI wijst het appartement toe; hoe de kamers er precies uitzien, zie je pas ter plekke.</p>
+  </div>`;
+}
+$("#rooms").addEventListener("click", (e) => { const b = e.target.closest("[data-bed]"); if (b) pickBed(b.dataset.bed); });
 
 /* ---------- melding ---------- */
 function renderNotice() {
@@ -525,7 +573,7 @@ function renderGeneral() {
   el.innerHTML = `<div class="checks"><div class="checks-head">Geldt voor alle huizen</div><ul>${GENERAL.map((c) =>
     `<li class="ck-${esc(c.s)}"><span class="ck-ico" aria-hidden="true">${ICON[c.s] || "i"}</span><span>${esc(c.t)}</span></li>`).join("")}</ul></div>`;
 }
-function renderAll() { renderGeneral(); renderWho(); renderStand(); renderPasses(); renderQs(); $("#f-submit").disabled = busy.has("add"); }
+function renderAll() { renderGeneral(); renderWho(); renderStand(); renderPasses(); renderQs(); renderRooms(); $("#f-submit").disabled = busy.has("add"); }
 
 /* ---------- start ---------- */
 renderNotice();
@@ -549,9 +597,9 @@ renderAll();
     }
     fs = { db: f.getFirestore(app), doc: f.doc, setDoc: f.setDoc, deleteDoc: f.deleteDoc, addDoc: f.addDoc, collection: f.collection, writeBatch: f.writeBatch };
     const fail = (err) => { console.error(err); S.error = err; renderNotice(); };
-    let pending = 4;
+    let pending = 5;
     const ready = () => { if (--pending === 0) S.loaded = true; };
-    const RAW = { claims: [], votes: [], answers: [], extra: [] };
+    const RAW = { claims: [], votes: [], answers: [], extra: [], beds: [] };
     // Alles van geblokkeerde apparaten weg, en alleen bijdragen van ná het kiezen van de naam
     // (zo verschijnt niks van de vorige eigenaar van een overgenomen naam).
     const refilter = () => {
@@ -561,8 +609,9 @@ renderAll();
       S.votes = RAW.votes.filter((v) => ok(v.slug, v.at));
       S.answers = RAW.answers.filter((a) => ok(a.slug, a.at));
       S.extra = RAW.extra.filter((o) => ok(o.bySlug, o.order));
+      S.beds = RAW.beds.filter((b) => ok(b.slug, b.at) && (visible(b.slug) || testMode()) && ALL_BEDS.some((x) => x.id === b.id));
     };
-    const sub = (name, key, after) => {
+    const sub = (name, key, after, onFail = fail) => {
       let first = true;
       f.onSnapshot(f.collection(fs.db, name), (snap) => {
         RAW[key] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -571,7 +620,7 @@ renderAll();
         if (first) { first = false; ready(); }
         if (after) after();
         renderAll();
-      }, fail);
+      }, onFail);
     };
     sub("claims", "claims", () => {
             S.claimsLoaded = true;
@@ -579,5 +628,7 @@ renderAll();
       if (!$("#gate").hidden && gateState.mode === "pick") renderGate();
     });
     sub("votes", "votes"); sub("answers", "answers"); sub("options", "extra");
+    // Kamerverdeling los houden: als die (nog) niet werkt, blijft de rest van de site gewoon werken.
+    sub("beds", "beds", () => { S.bedsLoaded = true; S.bedsError = false; }, (err) => { console.error(err); S.bedsError = true; ready(); renderRooms(); });
   } catch (err) { console.error(err); S.error = err; renderNotice(); }
 })();

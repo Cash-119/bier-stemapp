@@ -27,11 +27,13 @@
     <div class="who-row">
       <span id="who-text">Even laden…</span>
       <nav class="topnav" aria-label="Snel naar">
-        <a href="#opties">Huizen</a><a href="#vragen">Vragen</a><a href="#uitslag">Uitslag</a><a href="#toevoegen">Toevoegen</a>
+        <a href="#opties">Huizen</a><a href="#vragen">Vragen</a><a href="#uitslag">Uitslag</a><a href="#kamers">Kamers</a><a href="#toevoegen">Toevoegen</a>
       </nav>
     </div>
     <div class="progress" id="progress" hidden></div>
   </div>
+
+  <a class="decided" href="#kamers" id="decided"><span class="decided-tag">Besloten</span><span>We gaan naar <b>Alexandra Beach</b>. Kies je bed</span><span aria-hidden="true">→</span></a>
 
   <div class="notice" id="notice" hidden></div>
 
@@ -53,6 +55,12 @@
   <section id="uitslag">
     <div class="sec-head"><h2>Uitslag</h2><span class="eyebrow">Ja = 2 punten · misschien = 1 · nee = −2</span></div>
     <div id="stand-body"><div class="empty">De uitslag verschijnt zodra de reizen geladen zijn.</div></div>
+  </section>
+
+  <section id="kamers">
+    <div class="sec-head"><h2>Kamerverdeling</h2><span class="eyebrow">Alexandra Beach · 3-kamerappartement</span></div>
+    <p class="muted rooms-intro">Tik op een vrij bed om het te pakken. Tik nog een keer op je eigen bed om het weer vrij te geven. Wisselen? Kies gewoon een ander vrij bed.</p>
+    <div id="rooms"><div class="empty">De kamers worden geladen…</div></div>
   </section>
 
   <section id="toevoegen">
@@ -80,6 +88,7 @@
   <a href="#opties" data-sec="opties"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg><span>Huizen</span></a>
   <a href="#vragen" data-sec="vragen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 9a3 3 0 1 1 4.3 2.7c-.9.4-1.5 1.2-1.5 2.2V15M12 19h.01"/></svg><span>Vragen</span></a>
   <a href="#uitslag" data-sec="uitslag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-9"/></svg><span>Uitslag</span></a>
+  <a href="#kamers" data-sec="kamers"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5M7 11.5a1.5 1.5 0 1 0 0-.01"/></svg><span>Kamers</span></a>
   <a href="#toevoegen" data-sec="toevoegen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Toevoegen</span></a>
 </nav>
 
